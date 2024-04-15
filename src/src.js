@@ -96,11 +96,9 @@ function drawTouchControls() {
 }
 
 function drawMap(shakeX, shakeY) {
-	let vx = Math.min(Math.max(viewX, viewXMax), viewXMin),
-		vy = Math.min(Math.max(viewY, viewYMin), viewYMax)
-	vx += shakeX
-	vy += shakeY
-	const cl = Math.round(Math.max(0, -1 - vx) / tileSize),
+	const vx = Math.min(Math.max(viewX, viewXMax), viewXMin) + shakeX,
+		vy = Math.min(Math.max(viewY, viewYMin), viewYMax) + shakeY,
+		cl = Math.round(Math.max(0, -1 - vx) / tileSize),
 		cr = Math.min(cl + maxColsInView, mapCols),
 		rt = Math.round(Math.max(0, vy - yMax) / tileSize),
 		rb = Math.min(rt + maxRowsInView, mapRows),
