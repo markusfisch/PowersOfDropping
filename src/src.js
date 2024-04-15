@@ -751,20 +751,7 @@ function createAtlas(sources) {
 		)
 		spriteSizes.push([dw / spriteSize, dh / spriteSize])
 		node.img = svgToImg(src, sw, sh, dw, dh).onload = function() {
-			const angle = fm[1] * Math.PI / 180,
-				x = node.rc.l + border,
-				y = node.rc.t + border,
-				w2 = dw >> 1,
-				h2 = dh >> 1
-			if (angle > 0) {
-				ctx.save()
-				ctx.translate(x + w2, y + h2)
-				ctx.rotate(angle)
-				ctx.drawImage(this, -w2, -h2)
-				ctx.restore()
-			} else {
-				ctx.drawImage(this, x, y)
-			}
+			ctx.drawImage(this, node.rc.l + border, node.rc.t + border)
 			--canvas.pending
 		}
 	}
