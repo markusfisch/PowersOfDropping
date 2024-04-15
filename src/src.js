@@ -16,7 +16,6 @@ let spriteSizes = [],
 	perspectiveLoc,
 	transformation,
 	transformationLoc,
-	textureLoc,
 	program,
 	width,
 	height,
@@ -61,7 +60,7 @@ let spriteSizes = [],
 	dustLength = 20,
 	dustDuration = 400,
 	fallingBlocksLength = 16,
-	fallingBlocks,
+	fallingBlocks = [],
 	pointersLength,
 	pointersX = [],
 	pointersY = [],
@@ -545,7 +544,6 @@ function maze(l, t, r, b) {
 }
 
 function createMap() {
-	fallingBlocks = []
 	for (let i = fallingBlocksLength; i--;) {
 		fallingBlocks[i] = -1
 	}
@@ -579,12 +577,11 @@ function init(atlas) {
 	createMap()
 
 	const canvas = document.getElementById('C')
-	gl = canvas.getContext('webgl')
 
-	const texture = createTexture(atlas.canvas),
-		program = createProgram(
-			document.getElementById('VS').textContent,
-			document.getElementById('FS').textContent)
+	gl = canvas.getContext('webgl')
+	gl.enable(gl.BLEND)
+	gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
+	gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, 1)
 
 	vertexPositionBuffer = createBuffer([
 		-1, 1,
@@ -594,20 +591,21 @@ function init(atlas) {
 	])
 	texturePositionBuffer = createBuffer(atlas.coords)
 
+	const program = createProgram(
+			document.getElementById('VS').textContent,
+			document.getElementById('FS').textContent)
+
 	vertexPositionLoc = getEnabledAttribLocation(program, 'vertexPosition')
 	texturePositionLoc = getEnabledAttribLocation(program, 'texturePosition')
 	perspectiveLoc = gl.getUniformLocation(program, 'perspective')
 	transformationLoc = gl.getUniformLocation(program, 'transformation')
-	textureLoc = gl.getUniformLocation(program, 'texture')
-
-	gl.enable(gl.BLEND)
-	gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
-	gl.clearColor(.066, .066, .066, 1)
-	gl.useProgram(program)
 
 	gl.activeTexture(gl.TEXTURE0)
-	gl.bindTexture(gl.TEXTURE_2D, texture)
-	gl.uniform1i(textureLoc, 0)
+	gl.bindTexture(gl.TEXTURE_2D, createTexture(atlas.canvas))
+	gl.uniform1i(gl.getUniformLocation(program, 'texture'), 0)
+
+	gl.clearColor(.066, .066, .066, 1)
+	gl.useProgram(program)
 
 	window.onresize = resize
 	resize()
