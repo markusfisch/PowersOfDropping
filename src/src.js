@@ -64,7 +64,6 @@ let seed = 1,
 	pointersLength,
 	pointersX = [],
 	pointersY = [],
-	keysDown = [],
 	playerDestX,
 	playerDestY,
 	playerX,
@@ -292,33 +291,6 @@ function processTouch() {
 	}
 }
 
-function processKey() {
-	if (gameOver) {
-		return
-	}
-	if (keysDown[37] || keysDown[72]) {
-		move(-1, 0)
-	}
-	if (keysDown[39] || keysDown[76]) {
-		move(1, 0)
-	}
-	if (keysDown[38] || keysDown[75]) {
-		move(0, -1)
-	}
-	if (keysDown[40] || keysDown[74]) {
-		move(0, 1)
-	}
-	if (keysDown[32]) {
-		dropBlock(Math.round(playerX), Math.round(playerY))
-	}
-	if (keysDown[83]) { // s
-		magnification = magnification == .1
-				? 1 / Math.max(mapCols, mapRows)
-				: .1
-		resize()
-	}
-}
-
 function pageXToGl(x) {
 	return (x - halfWidth) / halfWidth
 }
@@ -366,18 +338,46 @@ function pointerDown(event) {
 	setPointer(event, true)
 }
 
-function setKey(event, down) {
-	keysDown[event.keyCode] = down
-	event.stopPropagation()
+function processKey(keyCode) {
+	if (gameOver) {
+		return
+	}
+	switch (keyCode) {
+	case 37:
+	case 72:
+		move(-1, 0)
+		break
+	case 39:
+	case 76:
+		move(1, 0)
+		break
+	case 38:
+	case 75:
+		move(0, -1)
+		break
+	case 40:
+	case 74:
+		move(0, 1)
+		break
+	case 32:
+		dropBlock(Math.round(playerX), Math.round(playerY))
+		break
+	case 83: // s // s
+		magnification = magnification == .1
+				? 1 / Math.max(mapCols, mapRows)
+				: .1
+		resize()
+		break
+	}
 }
 
 function keyUp(event) {
-	setKey(event, false)
+	event.stopPropagation()
 }
 
 function keyDown(event) {
-	setKey(event, true)
-	processKey()
+	processKey(event.keyCode)
+	event.stopPropagation()
 }
 
 function wireInputs() {
