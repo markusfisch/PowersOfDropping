@@ -6,7 +6,8 @@ const PLAYER = 0,
 	WALL = 3,
 	ARROW = 4
 
-let spriteSizes = [],
+let seed = 1,
+	spriteSizes = [],
 	gl,
 	vertexPositionBuffer,
 	vertexPositionLoc,
@@ -16,7 +17,6 @@ let spriteSizes = [],
 	perspectiveLoc,
 	transformation,
 	transformationLoc,
-	program,
 	width,
 	height,
 	halfWidth,
@@ -504,17 +504,17 @@ function maze(l, t, r, b) {
 	}
 	const w = r - l,
 		h = b - t,
-		x = w < 2 ? r : (l + 1 + Math.round(Math.random() * (w - 2))) | 1,
-		y = h < 2 ? b : (t + 1 + Math.round(Math.random() * (h - 2))) | 1,
-		skip = x < r && y < b ? Math.round(Math.random() * 4) % 4 : -1
+		x = w < 2 ? r : (l + 1 + Math.round(random() * (w - 2))) | 1,
+		y = h < 2 ? b : (t + 1 + Math.round(random() * (h - 2))) | 1,
+		skip = x < r && y < b ? Math.round(random() * 4) % 4 : -1
 	if (x < r) {
 		const y1 = skip == 0 ?
 				-1 :
-				(t + Math.round(Math.random() * (y - t))) & 0xfffe,
+				(t + Math.round(random() * (y - t))) & 0xfffe,
 			y2 = y < b ?
 				skip == 1 ?
 					-1 :
-					(y + 1 + Math.round(Math.random() * (b - y - 1))) & 0xfffe :
+					(y + 1 + Math.round(random() * (b - y - 1))) & 0xfffe :
 				-1
 		for (let i = t, o = t * mapCols + x; i <= b; ++i, o += mapCols) {
 			if (i != y1 && i != y2) {
@@ -525,11 +525,11 @@ function maze(l, t, r, b) {
 	if (y < b) {
 		const x1 = skip == 2 ?
 				-1 :
-				(l + Math.round(Math.random() * (x - l))) & 0xfffe,
+				(l + Math.round(random() * (x - l))) & 0xfffe,
 			x2 = x < r ?
 				skip == 3 ?
 					-1 :
-					(x + 1 + Math.round(Math.random() * (r - x - 1))) & 0xfffe :
+					(x + 1 + Math.round(random() * (r - x - 1))) & 0xfffe :
 				-1
 		for (let i = l, o = y * mapCols; i <= r; ++i) {
 			if (i != x1 && i != x2) {
@@ -541,6 +541,11 @@ function maze(l, t, r, b) {
 	maze(x + 1, t, r, y - 1)
 	maze(l, y + 1, x - 1, b)
 	maze(x + 1, y + 1, r, b)
+}
+
+function random() {
+	// From: http://indiegamr.com/generate-repeatable-random-numbers-in-js/
+	return (seed = (seed * 9301 + 49297) % 233280) / 233280
 }
 
 function createMap() {
