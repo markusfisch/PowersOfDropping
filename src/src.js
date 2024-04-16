@@ -142,7 +142,7 @@ function drawMap(shakeX, shakeY) {
 				vx + playerX * tileSize,
 				vy - playerY * tileSize,
 				1,
-				1 + Math.min(1, Math.max(
+				1 + Math.min(.2, Math.max(
 					Math.abs(playerDestX - playerX),
 					Math.abs(playerDestY - playerY))))
 		}
