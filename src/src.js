@@ -607,7 +607,6 @@ function init(atlas) {
 
 	gl.activeTexture(gl.TEXTURE0)
 	gl.bindTexture(gl.TEXTURE_2D, createTexture(atlas.canvas))
-	gl.uniform1i(gl.getUniformLocation(program, 'texture'), 0)
 
 	gl.clearColor(.066, .066, .066, 1)
 	gl.useProgram(program)
