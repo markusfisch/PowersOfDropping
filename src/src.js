@@ -7,7 +7,6 @@ const PLAYER = 0,
 	ARROW = 4
 
 let seed = 1,
-	spriteSizes = [],
 	gl,
 	vertexPositionBuffer,
 	vertexPositionLoc,
@@ -75,9 +74,8 @@ function drawSprite(sprite, x, y, xm, ym) {
 	gl.vertexAttribPointer(texturePositionLoc, 2, gl.FLOAT, gl.FALSE, 0,
 		sprite << 5)
 
-	const size = spriteSizes[sprite]
-	transformation[0] = halfTileSize * size[0] * (xm || 1)
-	transformation[4] = halfTileSize * size[1] * (ym || 1)
+	transformation[0] = halfTileSize * (xm || 1)
+	transformation[4] = halfTileSize * (ym || 1)
 
 	transformation[6] = x
 	transformation[7] = y
@@ -757,7 +755,6 @@ function createAtlas(sources) {
 			r - pad, t + pad,
 			r - pad, b - pad,
 		)
-		spriteSizes.push([dw / spriteSize, dh / spriteSize])
 		node.img = svgToImg(src, sw, sh, dw, dh).onload = function() {
 			ctx.drawImage(this, node.rc.l + border, node.rc.t + border)
 			--canvas.pending
