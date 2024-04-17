@@ -632,119 +632,33 @@ function waitForAtlas(atlas) {
 	}
 }
 
-function svgToImg(svg, sw, sh, dw, dh) {
+function svgToImg(svg, src, dst) {
 	const img = new Image()
 	img.src = `data:image/svg+xml;base64,${btoa(
 		`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${
-		sw} ${sh}" width="${dw}" height="${dh}">${svg}</svg>`)}`
+		src} ${src}" width="${dst}" height="${dst}">${svg}</svg>`)}`
 	return img
-}
-
-// Packing algorithm from:
-// http://www.blackpawn.com/texts/lightmaps/default.html
-function atlasInsert(node, w, h) {
-	if (node.l) {
-		// Try to insert image into left and then into right node.
-		return atlasInsert(node.l, w, h) || atlasInsert(node.r, w, h)
-	}
-	if (node.img) {
-		// Node already has an image.
-		return
-	}
-	const rc = node.rc,
-		rw = rc.r - rc.l,
-		rh = rc.b - rc.t
-	if (rw < w || rh < h) {
-		// Node is too small.
-		return
-	}
-	if (rw == w && rh == h) {
-		// Node fits exactly.
-		return node
-	}
-	// Put image into node and split the remaining space into two
-	// new nodes.
-	node.l = {}
-	node.r = {}
-	if (rw - w > rh - h) {
-		// +-------+---+
-		// | image |   |
-		// +-------+   |
-		// |       | l |
-		// |   r   |   |
-		// |       |   |
-		// +-------+---+
-		node.l.rc = {
-			l: rc.l + w,
-			t: rc.t,
-			r: rc.r,
-			b: rc.b
-		}
-		node.r.rc = {
-			l: rc.l,
-			t: rc.t + h,
-			r: rc.l + w,
-			b: rc.b,
-		}
-	} else {
-		// +-------+---+
-		// | image | l |
-		// +-------+---+
-		// |           |
-		// |     r     |
-		// |           |
-		// +-----------+
-		node.l.rc = {
-			l: rc.l + w,
-			t: rc.t,
-			r: rc.r,
-			b: rc.t + h,
-		}
-		node.r.rc = {
-			l: rc.l,
-			t: rc.t + h,
-			r: rc.r,
-			b: rc.b,
-		}
-	}
-	// Fit rectangle to image.
-	node.rc.r = rc.l + w - 1
-	node.rc.b = rc.t + h - 1
-	return node
 }
 
 function createAtlas(sources) {
 	const atlasSize = 1024,
 		svgSize = 100,
 		spriteSize = 128,
-		scale = spriteSize / svgSize,
 		border = 1,
 		uvPixel = 1 / atlasSize,
 		pad = (border + 2) * uvPixel,
-		nodes = {rc: {l: 0, t: 0, r: atlasSize, b: atlasSize}},
 		coords = [],
 		canvas = document.createElement('canvas'),
 		ctx = canvas.getContext('2d'),
 		len = sources.length
 	canvas.width = canvas.height = atlasSize
 	canvas.pending = len
-	for (let i = 0; i < len; ++i) {
+	for (let i = 0, x = 0, y = 0; i < len; ++i) {
 		const src = sources[i],
-			fm = (src.split('<')[0].trim() + ';').split(';'),
-			size = fm[0].split('x'),
-			sw = size[0] || svgSize,
-			sh = size[1] || svgSize,
-			dw = sw * scale | 0,
-			dh = sh * scale | 0,
-			node = atlasInsert(nodes, dw + border * 2, dh + border * 2)
-		if (!node) {
-			return
-		}
-		const rc = node.rc,
-			l = rc.l * uvPixel,
-			t = rc.t * uvPixel,
-			r = l + dw * uvPixel,
-			b = t + dh * uvPixel
+			l = x * uvPixel,
+			t = y * uvPixel,
+			r = l + spriteSize * uvPixel,
+			b = t + spriteSize * uvPixel
 		// A--C
 		// | /|
 		// |/ |
@@ -755,9 +669,15 @@ function createAtlas(sources) {
 			r - pad, t + pad,
 			r - pad, b - pad,
 		)
-		node.img = svgToImg(src, sw, sh, dw, dh).onload = function() {
-			ctx.drawImage(this, node.rc.l + border, node.rc.t + border)
+		const xx = x, yy = y
+		svgToImg(src, svgSize, spriteSize).onload = function() {
+			ctx.drawImage(this, xx + border, yy + border)
 			--canvas.pending
+		}
+		x += spriteSize + border * 2
+		if (x > atlasSize) {
+			x = 0
+			y += spriteSize + border * 2
 		}
 	}
 	return {
