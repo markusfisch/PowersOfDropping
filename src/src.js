@@ -35,7 +35,6 @@ let seed = 1,
 	map = [],
 	mapCols,
 	mapRows,
-	items = [],
 	viewDestX,
 	viewDestY,
 	viewX,
@@ -91,7 +90,7 @@ function drawTouchControls() {
 	drawSprite(ARROW, btnDown, btnBase)
 }
 
-function drawMap(shakeX, shakeY) {
+function draw(shakeX, shakeY) {
 	const vx = (maxColsInView >= mapCols
 			? viewXMin + (viewXMax - viewXMin) * .5
 			: Math.min(Math.max(viewX, viewXMax), viewXMin)) + shakeX,
@@ -107,42 +106,41 @@ function drawMap(shakeX, shakeY) {
 		t = vy - rt * tileSize
 	let offset = rt * mapCols + cl
 	for (let y = t, r = rt; r < rb; y -= tileSize, ++r, offset += skip) {
-		// Draw row.
 		for (let x = l, c = cl; c < cr; x += tileSize, ++c, ++offset) {
-			const floor = map[offset]
-			drawSprite(floor, x, y)
-			const b = items[offset]
-			if (b >= 0) {
-				drawSprite(WALL, x, y + b, 1, 1 + b * 3)
-			}
+			drawSprite(map[offset], x, y)
 		}
-		// Draw dust.
-		for (let i = 0; i < dustLength; ++i) {
-			const d = dust[i],
-				dx = d.x,
-				dy = d.y,
-				life = d.life
-			if (life > now && dy >= rt && dy < rb &&
-					dx >= cl && dx < cr &&
-					(dy - r) | 0 == 0) {
-				drawSprite(DUST,
-					vx + dx * tileSize,
-					vy - dy * tileSize,
-					1,
-					1 + (life - now) / dustDuration)
-			}
-		}
-		// Draw player.
-		if (!gameOver && playerY >= rt && playerY < rb &&
-				playerX >= cl && playerX < cr &&
-				(playerY - r) | 0 == 0) {
-			drawSprite(PLAYER,
-				vx + playerX * tileSize,
-				vy - playerY * tileSize,
+	}
+	// Draw dust.
+	for (let i = 0; i < dustLength; ++i) {
+		const d = dust[i],
+			life = d.life
+		if (life > now) {
+			drawSprite(DUST,
+				vx + d.x * tileSize,
+				vy - d.y * tileSize,
 				1,
-				1 + Math.min(.2, Math.max(
-					Math.abs(playerDestX - playerX),
-					Math.abs(playerDestY - playerY))))
+				1 + (life - now) / dustDuration)
+		}
+	}
+	// Draw player.
+	if (!gameOver) {
+		drawSprite(PLAYER,
+			vx + playerX * tileSize,
+			vy - playerY * tileSize,
+			1,
+			1 + Math.min(.2, Math.max(
+				Math.abs(playerDestX - playerX),
+				Math.abs(playerDestY - playerY))))
+	}
+	// Draw falling blocks.
+	for (let i = 0; i < fallingBlocksLength; ++i) {
+		const o = fallingBlocks[i], h = o.height
+		if (h > 0) {
+			drawSprite(ARROW,
+				vx + o.x * tileSize,
+				vy - o.y * tileSize + h,
+				1,
+				1 + h * 3)
 		}
 	}
 }
@@ -150,39 +148,34 @@ function drawMap(shakeX, shakeY) {
 function impact(x, y) {
 	shake()
 	spawnDust(x, y)
+	map[y * mapCols + x] = WALL
 	if (Math.round(playerX) == x && Math.round(playerY) == y) {
 		gameOver = now
 	}
 }
 
 function updateBlocks() {
-	for (let i = fallingBlocksLength; i--;) {
-		const idx = fallingBlocks[i]
-		if (idx > -1) {
-			let b = items[idx]
-			if (b > 0) {
-				b -= .05 * factor
-				if (b <= 0) {
-					b = 0
-					impact(idx % mapCols, idx / mapCols | 0)
-					fallingBlocks[i] = -1
-				}
-				items[idx] = b
+	for (let i = 0; i < fallingBlocksLength; ++i) {
+		const o = fallingBlocks[i]
+		let h = o.height
+		if (h > 0) {
+			h -= .05 * factor
+			if (h <= 0) {
+				h = 0
+				impact(o.x, o.y)
 			}
+			o.height = h
 		}
 	}
 }
 
 function dropBlock(x, y) {
-	for (let i = fallingBlocksLength; i--;) {
-		if (fallingBlocks[i] < 0) {
-			const offset = (y | 0) * mapCols + (x | 0),
-				b = items[offset]
-			if (b == -1) {
-				items[offset] = 1
-			}
-			fallingBlocks[i] = offset
-			break
+	for (let i = 0; i < fallingBlocksLength; ++i) {
+		const o = fallingBlocks[i]
+		if (o.height == 0) {
+			o.x = x
+			o.y = y
+			o.height = 1
 		}
 	}
 }
@@ -239,13 +232,12 @@ function run() {
 	gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer)
 	gl.vertexAttribPointer(vertexPositionLoc, 2, gl.FLOAT, gl.FALSE, 0, 0)
 
-	drawMap(shakeX, shakeY)
+	draw(shakeX, shakeY)
 	showTouchControls && drawTouchControls()
 }
 
 function canMoveTo(x, y) {
-	const offset = y * mapCols + x
-	return map[offset] === FLOOR && items[offset] !== 0
+	return map[y * mapCols + x] === FLOOR
 }
 
 function move(dx, dy) {
@@ -551,13 +543,23 @@ function random() {
 }
 
 function createMap() {
-	for (let i = fallingBlocksLength; i--;) {
-		fallingBlocks[i] = -1
+	for (let i = dustLength; i-- > 0;) {
+		dust[i] = {
+			x: 0,
+			y: 0,
+			life: 0
+		}
+	}
+	for (let i = fallingBlocksLength; i-- > 0;) {
+		fallingBlocks[i] = {
+			x: 0,
+			y: 0,
+			height: 0
+		}
 	}
 	mapCols = mapRows = 31
 	for (let i = mapCols * mapRows; i--;) {
 		map[i] = FLOOR
-		items[i] = -1
 	}
 	maze(2, 2, mapCols - 3, mapRows - 3)
 	for (let y = mapRows / 3 | 0, ye = y + y; y < ye; ++y) {
@@ -569,18 +571,7 @@ function createMap() {
 	playerY = playerDestY = mapRows >> 1
 }
 
-function initDust() {
-	for (let i = dustLength; i-- > 0;) {
-		dust[i] = {
-			x: 0,
-			y: 0,
-			life: 0
-		}
-	}
-}
-
 function init(atlas) {
-	initDust()
 	createMap()
 
 	const canvas = document.getElementById('C')
