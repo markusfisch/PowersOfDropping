@@ -220,7 +220,8 @@ function clearWallAt(x, y) {
 		return
 	}
 	map[o] = FLOOR
-	spawnDust(x, y)
+	spawnDust(x, y, 4)
+	shake()
 }
 
 function clearWalls(x, y) {
