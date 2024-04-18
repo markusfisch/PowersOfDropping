@@ -118,11 +118,12 @@ function draw(shakeX, shakeY) {
 		const d = dust[i],
 			life = d.life
 		if (life > now) {
+			const size = 1 + d.size * (life - now) / dustDuration
 			drawSprite(DUST,
 				vx + d.x * tileSize,
 				vy - d.y * tileSize,
-				1,
-				1 + (life - now) / dustDuration)
+				size,
+				size)
 		}
 	}
 	// Draw incoming marker.
@@ -240,14 +241,15 @@ function shake() {
 	shakeUntil = now + shakeDuration
 }
 
-function spawnDust(x, y) {
+function spawnDust(x, y, size) {
 	let specks = 2 + Math.random() * 4 | 0
 	for (let i = 0; i < dustLength; ++i) {
 		const d = dust[i]
 		if (d.life < now) {
-			d.x = x + (Math.random() - .5) * tileSize * 2
-			d.y = y + (Math.random() - .5) * tileSize * 2
+			d.x = x + (Math.random() - .5) * tileSize * 3
+			d.y = y + (Math.random() - .5) * tileSize * 3
 			d.life = now + Math.random() * dustDuration
+			d.size = size || 1
 			if (--specks < 0) {
 				break
 			}
