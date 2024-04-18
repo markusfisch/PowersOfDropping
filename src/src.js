@@ -104,10 +104,10 @@ function draw(shakeX, shakeY) {
 		skip = mapCols - (cr - cl),
 		l = vx + cl * tileSize,
 		t = vy - rt * tileSize
-	let offset = rt * mapCols + cl
-	for (let y = t, r = rt; r < rb; y -= tileSize, ++r, offset += skip) {
-		for (let x = l, c = cl; c < cr; x += tileSize, ++c, ++offset) {
-			drawSprite(map[offset], x, y)
+	let o = rt * mapCols + cl
+	for (let y = t, r = rt; r < rb; y -= tileSize, ++r, o += skip) {
+		for (let x = l, c = cl; c < cr; x += tileSize, ++c, ++o) {
+			drawSprite(map[o], x, y)
 		}
 	}
 	// Draw dust.
@@ -134,21 +134,29 @@ function draw(shakeX, shakeY) {
 	}
 	// Draw falling blocks.
 	for (let i = 0; i < fallingBlocksLength; ++i) {
-		const o = fallingBlocks[i], h = o.height
+		const b = fallingBlocks[i], h = b.height
 		if (h > 0) {
 			drawSprite(WALL,
-				vx + o.x * tileSize,
-				vy - o.y * tileSize + h,
+				vx + b.x * tileSize,
+				vy - b.y * tileSize + h,
 				1,
 				1 + h * 3)
 		}
 	}
 }
 
+function offset(x, y) {
+	return y * mapCols + x
+}
+
+function set(x, y, tile) {
+	map[offset(x, y)] = tile
+}
+
 function impact(x, y) {
 	shake()
 	spawnDust(x, y)
-	map[y * mapCols + x] = WALL
+	set(x, y, WALL)
 	if (Math.round(playerX) == x && Math.round(playerY) == y) {
 		gameOver = now
 	}
@@ -173,11 +181,32 @@ function dropBlock(x, y) {
 	for (let i = 0; i < fallingBlocksLength; ++i) {
 		const o = fallingBlocks[i]
 		if (o.height == 0) {
-			o.x = x
-			o.y = y
+			o.x = Math.round(x)
+			o.y = Math.round(y)
 			o.height = 1
 		}
 	}
+}
+
+function clearWallAt(x, y) {
+	if (x < 0 || x >= mapCols || y < 0 || y >= mapRows) {
+		return
+	}
+	const o = offset(x, y)
+	if (map[o] == FLOOR) {
+		return
+	}
+	map[o] = FLOOR
+	spawnDust(x, y)
+}
+
+function clearWalls(x, y) {
+	x = Math.round(x)
+	y = Math.round(y)
+	clearWallAt(x - 1, y)
+	clearWallAt(x + 1, y)
+	clearWallAt(x, y - 1)
+	clearWallAt(x, y + 1)
 }
 
 function setViewDest(x, y) {
@@ -237,7 +266,7 @@ function run() {
 }
 
 function canMoveTo(x, y) {
-	return map[y * mapCols + x] === FLOOR
+	return map[offset(x, y)] === FLOOR
 }
 
 function move(dx, dy) {
@@ -350,9 +379,12 @@ function processKey(keyCode) {
 		move(0, 1)
 		break
 	case 32:
-		dropBlock(Math.round(playerX), Math.round(playerY))
+		dropBlock(playerX, playerY)
 		break
-	case 83: // s // s
+	case 13:
+		clearWalls(playerX, playerY)
+		break
+	case 83: // s
 		magnification = magnification == .1
 				? 1 / Math.max(mapCols, mapRows)
 				: .1
@@ -564,7 +596,7 @@ function createMap() {
 	maze(2, 2, mapCols - 3, mapRows - 3)
 	for (let y = (mapRows / 2 - 4) | 0, ye = mapRows - y; y < ye; ++y) {
 		for (let x = (mapCols / 2 - 4) | 0, xe = mapCols - x; x < xe; ++x) {
-			map[y * mapCols + x] = FLOOR
+			set(x, y, FLOOR)
 		}
 	}
 	playerX = playerDestX = mapCols >> 1
