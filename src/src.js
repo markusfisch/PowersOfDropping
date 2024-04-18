@@ -59,6 +59,9 @@ let seed = 1,
 	dustDuration = 400,
 	fallingBlocksLength = 16,
 	fallingBlocks = [],
+	blockIncoming = false,
+	blockIncomingX,
+	blockIncomingY,
 	pointersLength,
 	pointersX = [],
 	pointersY = [],
@@ -122,6 +125,12 @@ function draw(shakeX, shakeY) {
 				1 + (life - now) / dustDuration)
 		}
 	}
+	// Draw incoming marker.
+	if (blockIncoming) {
+		drawSprite(ARROW,
+			vx + blockIncomingX * tileSize,
+			vy - blockIncomingY * tileSize)
+	}
 	// Draw player.
 	if (!gameOver) {
 		drawSprite(PLAYER,
@@ -157,6 +166,7 @@ function impact(x, y) {
 	shake()
 	spawnDust(x, y)
 	set(x, y, WALL)
+	blockIncoming = false
 	if (Math.round(playerX) == x && Math.round(playerY) == y) {
 		gameOver = now
 	}
@@ -186,6 +196,18 @@ function dropBlock(x, y) {
 			o.height = 1
 		}
 	}
+}
+
+function postDropBlock(x, y) {
+	if (blockIncoming) {
+		return
+	}
+	blockIncoming = true
+	blockIncomingX = x
+	blockIncomingY = y
+	setTimeout(function() {
+		dropBlock(blockIncomingX, blockIncomingY)
+	}, 500)
 }
 
 function clearWallAt(x, y) {
@@ -379,7 +401,7 @@ function processKey(keyCode) {
 		move(0, 1)
 		break
 	case 32:
-		dropBlock(playerX, playerY)
+		postDropBlock(playerX, playerY)
 		break
 	case 13:
 		clearWalls(playerX, playerY)
