@@ -136,7 +136,7 @@ function draw(shakeX, shakeY) {
 	for (let i = 0; i < fallingBlocksLength; ++i) {
 		const o = fallingBlocks[i], h = o.height
 		if (h > 0) {
-			drawSprite(ARROW,
+			drawSprite(WALL,
 				vx + o.x * tileSize,
 				vy - o.y * tileSize + h,
 				1,
@@ -562,8 +562,8 @@ function createMap() {
 		map[i] = FLOOR
 	}
 	maze(2, 2, mapCols - 3, mapRows - 3)
-	for (let y = mapRows / 3 | 0, ye = y + y; y < ye; ++y) {
-		for (let x = mapCols / 3 | 0, xe = x + x; x < xe; ++x) {
+	for (let y = (mapRows / 2 - 4) | 0, ye = mapRows - y; y < ye; ++y) {
+		for (let x = (mapCols / 2 - 4) | 0, xe = mapCols - x; x < xe; ++x) {
 			map[y * mapCols + x] = FLOOR
 		}
 	}
