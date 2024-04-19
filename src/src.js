@@ -195,6 +195,7 @@ function dropBlock(x, y) {
 			o.x = Math.round(x)
 			o.y = Math.round(y)
 			o.height = 1
+			return
 		}
 	}
 }
