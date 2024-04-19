@@ -734,9 +734,8 @@ function createAtlas(sources) {
 	const atlasSize = 1024,
 		svgSize = 100,
 		spriteSize = 128,
-		border = 1,
 		uvPixel = 1 / atlasSize,
-		pad = (border + 2) * uvPixel,
+		pad = uvPixel * 2,
 		coords = [],
 		canvas = document.createElement('canvas'),
 		ctx = canvas.getContext('2d'),
@@ -761,13 +760,13 @@ function createAtlas(sources) {
 		)
 		const xx = x, yy = y
 		svgToImg(src, svgSize, spriteSize).onload = function() {
-			ctx.drawImage(this, xx + border, yy + border)
+			ctx.drawImage(this, xx, yy)
 			--canvas.pending
 		}
-		x += spriteSize + border * 2
-		if (x > atlasSize) {
+		x += spriteSize
+		if (x >= atlasSize) {
 			x = 0
-			y += spriteSize + border * 2
+			y += spriteSize
 		}
 	}
 	return {
