@@ -401,7 +401,7 @@ function setPointer(event, down) {
 		pointersX[0] = pageXToGl(event.pageX)
 		pointersY[0] = pageYToGl(event.pageY)
 	}
-	event.preventDefault()
+	event.stopPropagation()
 }
 
 function pointerCancel(event) {
@@ -472,18 +472,18 @@ function wireInputs() {
 	document.onkeydown = keyDown
 	document.onkeyup = keyUp
 
-	document.onmousedown = pointerDown
-	document.onmousemove = pointerMove
-	document.onmouseup = pointerUp
-	document.onmouseout = pointerCancel
-
-	if ('ontouchstart' in document) {
+	showTouchControls = 'ontouchstart' in document
+	if (showTouchControls) {
 		document.ontouchstart = pointerDown
 		document.ontouchmove = pointerMove
 		document.ontouchend = pointerUp
 		document.ontouchleave = pointerCancel
 		document.ontouchcancel = pointerCancel
-		showTouchControls = true
+	} else {
+		document.onmousedown = pointerDown
+		document.onmousemove = pointerMove
+		document.onmouseup = pointerUp
+		document.onmouseout = pointerCancel
 	}
 
 	// Prevent pinch/zoom on iOS 11 and above.
