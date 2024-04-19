@@ -4,7 +4,12 @@ const PLAYER = 0,
 	DUST = 1,
 	FLOOR = 2,
 	WALL = 3,
-	ARROW = 4
+	INCOMING = 4,
+	LEFT = 5,
+	RIGHT = 6,
+	UP = 7,
+	DOWN = 8,
+	DROP = 9
 
 let seed = 1,
 	gl,
@@ -27,6 +32,7 @@ let seed = 1,
 	showTouchControls = false,
 	btnLeft,
 	btnRight,
+	btnDrop,
 	btnUp,
 	btnDown,
 	btnBase,
@@ -87,10 +93,11 @@ function drawSprite(sprite, x, y, xm, ym) {
 }
 
 function drawTouchControls() {
-	drawSprite(ARROW, btnLeft, btnBase)
-	drawSprite(ARROW, btnRight, btnBase)
-	drawSprite(ARROW, btnUp, btnBase)
-	drawSprite(ARROW, btnDown, btnBase)
+	drawSprite(LEFT, btnLeft, btnBase)
+	drawSprite(RIGHT, btnRight, btnBase)
+	drawSprite(DROP, btnDrop, btnBase)
+	drawSprite(UP, btnUp, btnBase)
+	drawSprite(DOWN, btnDown, btnBase)
 }
 
 function draw(shakeX, shakeY) {
@@ -128,7 +135,7 @@ function draw(shakeX, shakeY) {
 	}
 	// Draw incoming marker.
 	if (blockIncoming) {
-		drawSprite(ARROW,
+		drawSprite(INCOMING,
 			vx + blockIncomingX * tileSize,
 			vy - blockIncomingY * tileSize)
 	}
@@ -358,6 +365,9 @@ function processTouch() {
 		} else if (inButton(btnRight, px, py)) {
 			move(1, 0)
 		}
+		if (inButton(btnDrop, px, py)) {
+			postDropBlock(playerX, playerY)
+		}
 		if (inButton(btnUp, px, py)) {
 			move(0, -1)
 		} else if (inButton(btnDown, px, py)) {
@@ -517,10 +527,11 @@ function resize() {
 	viewY = viewDestY
 
 	const btnMargin = .15,
-		btnSpacing = (2 - btnMargin * 2) / 3
+		btnSpacing = (2 - btnMargin * 2) / 4
 	btnLeft = -1 + btnMargin
 	btnDown = btnLeft + btnSpacing
-	btnUp = btnDown + btnSpacing
+	btnDrop = btnDown + btnSpacing
+	btnUp = btnDrop + btnSpacing
 	btnRight = btnUp + btnSpacing
 	btnBase = -yMax + btnMargin
 
