@@ -55,7 +55,7 @@ let seed = 1,
 	moveUntil = 0,
 	moveDuration = 300,
 	dust = [],
-	dustLength = 20,
+	dustLength = 50,
 	dustDuration = 400,
 	fallingBlocksLength = 16,
 	fallingBlocks = [],
@@ -163,11 +163,41 @@ function set(x, y, tile) {
 	map[offset(x, y)] = tile
 }
 
+function span(offset, step, times) {
+	while (times-- > 0) {
+		const peek = offset + step
+		if (map[peek] != WALL) {
+			break
+		}
+		offset = peek
+	}
+	return offset
+}
+
+function clearAdjacentWalls(x, y) {
+	const o = offset(x, y),
+		left = span(o, -1, x) % mapCols,
+		right = span(o, 1, mapCols - x) % mapCols,
+		top = span(o, -mapCols, y) / mapCols | 0,
+		bottom = span(o, mapCols, mapRows - y) / mapCols | 0
+	if (right - left > 2) {
+		for (let i = left; i <= right; ++i) {
+			clearWallAt(i, y)
+		}
+	}
+	if (bottom - top > 2) {
+		for (let i = top; i <= bottom; ++i) {
+			clearWallAt(x, i)
+		}
+	}
+}
+
 function impact(x, y) {
 	shake()
 	spawnDust(x, y)
 	set(x, y, WALL)
 	blockIncoming = false
+	clearAdjacentWalls(x, y)
 	if (Math.round(playerX) == x && Math.round(playerY) == y) {
 		gameOver = now
 	}
