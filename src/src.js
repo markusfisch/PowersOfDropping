@@ -5,11 +5,9 @@ const PLAYER = 0,
 	FLOOR = 2,
 	WALL = 3,
 	INCOMING = 4,
-	LEFT = 5,
+	UP = 5,
 	RIGHT = 6,
-	UP = 7,
-	DOWN = 8,
-	DROP = 9
+	DROP = 7
 
 let seed = 1,
 	gl,
@@ -30,12 +28,17 @@ let seed = 1,
 	tileSize,
 	halfTileSize,
 	showTouchControls = false,
-	btnLeft,
-	btnRight,
-	btnDrop,
-	btnUp,
-	btnDown,
-	btnBase,
+	btnLeftX,
+	btnLeftY,
+	btnRightX,
+	btnRightY,
+	btnUpX,
+	btnUpY,
+	btnDownX,
+	btnDownY,
+	btnDropX,
+	btnDropY,
+	btnSize,
 	maxColsInView,
 	maxRowsInView,
 	map = [],
@@ -93,11 +96,11 @@ function drawSprite(sprite, x, y, xm, ym) {
 }
 
 function drawTouchControls() {
-	drawSprite(LEFT, btnLeft, btnBase)
-	drawSprite(RIGHT, btnRight, btnBase)
-	drawSprite(DROP, btnDrop, btnBase)
-	drawSprite(UP, btnUp, btnBase)
-	drawSprite(DOWN, btnDown, btnBase)
+	drawSprite(RIGHT, btnLeftX, btnLeftY, -1)
+	drawSprite(RIGHT, btnRightX, btnRightY)
+	drawSprite(UP, btnUpX, btnUpY)
+	drawSprite(UP, btnDownX, btnDownY, 1, -1)
+	drawSprite(DROP, btnDropX, btnDropY)
 }
 
 function draw(shakeX, shakeY) {
@@ -349,8 +352,8 @@ function move(dx, dy) {
 	}
 }
 
-function inButton(btn, x, y) {
-	return Math.abs(btn - x) < tileSize && Math.abs(btnBase - y) < tileSize
+function inButton(bx, by, x, y) {
+	return Math.abs(bx - x) < btnSize && Math.abs(by - y) < btnSize
 }
 
 function processTouch() {
@@ -360,18 +363,21 @@ function processTouch() {
 	for (let i = 0; i < pointersLength; ++i) {
 		const px = pointersX[i],
 			py = pointersY[i]
-		if (inButton(btnLeft, px, py)) {
-			move(-1, 0)
-		} else if (inButton(btnRight, px, py)) {
-			move(1, 0)
+		let col = 0, row = 0
+		if (inButton(btnLeftX, btnLeftY, px, py)) {
+			col = -1
+		} else if (inButton(btnRightX, btnRightY, px, py)) {
+			col = 1
+		} else if (inButton(btnUpX, btnUpY, px, py)) {
+			row = -1
+		} else if (inButton(btnDownX, btnDownY, px, py)) {
+			row = 1
 		}
-		if (inButton(btnDrop, px, py)) {
+		if (col || row) {
+			move(col, row)
+		}
+		if (inButton(btnDropX, btnDropY, px, py)) {
 			postDropBlock(playerX, playerY)
-		}
-		if (inButton(btnUp, px, py)) {
-			move(0, -1)
-		} else if (inButton(btnDown, px, py)) {
-			move(0, 1)
 		}
 	}
 }
@@ -526,14 +532,19 @@ function resize() {
 	viewX = viewDestX
 	viewY = viewDestY
 
-	const btnMargin = .15,
-		btnSpacing = (2 - btnMargin * 2) / 4
-	btnLeft = -1 + btnMargin
-	btnDown = btnLeft + btnSpacing
-	btnDrop = btnDown + btnSpacing
-	btnUp = btnDrop + btnSpacing
-	btnRight = btnUp + btnSpacing
-	btnBase = -yMax + btnMargin
+	const btnMargin = .2,
+		btnMag = width > height ? 2 : 3
+	btnRightX = 1 - btnMargin
+	btnRightY = -yMax + btnMargin * btnMag
+	btnLeftX = btnRightX - btnMargin * btnMag
+	btnLeftY = btnRightY
+	btnDownX = btnRightX - btnMargin * btnMag * .5
+	btnDownY = -yMax + btnMargin
+	btnUpX = btnDownX
+	btnUpY = btnLeftY + (btnLeftY - btnDownY)
+	btnDropX = -1 + btnMargin * 1.5
+	btnDropY = btnRightY
+	btnSize = tileSize
 
 	perspective = new Float32Array([
 		1, 0, 0,
