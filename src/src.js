@@ -245,8 +245,8 @@ function postDropBlock(x, y) {
 		return
 	}
 	blockIncoming = true
-	blockIncomingX = x
-	blockIncomingY = y
+	blockIncomingX = Math.round(x)
+	blockIncomingY = Math.round(y)
 	setTimeout(function() {
 		dropBlock(blockIncomingX, blockIncomingY)
 	}, 500)
