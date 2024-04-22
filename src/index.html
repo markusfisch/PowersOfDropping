@@ -64,18 +64,17 @@ canvas {
 </g>
 </svg>
 <script id="VS" type="x-shader/x-vertex">
-attribute vec2 vertexPosition;
-attribute vec2 texturePosition;
+attribute vec2 vp;
+attribute vec2 tp;
 
-uniform mat3 perspective;
-uniform mat3 transformation;
+uniform mat3 p;
+uniform mat3 t;
 
-varying vec2 textureUV;
+varying vec2 tuv;
 
 void main() {
-	gl_Position = vec4(perspective * transformation *
-		vec3(vertexPosition, 1.), 1.);
-	textureUV = texturePosition;
+	gl_Position = vec4(p * t * vec3(vp, 1.), 1.);
+	tuv = tp;
 }
 </script>
 <script id="FS" type="x-shader/x-fragment">
@@ -85,12 +84,12 @@ precision highp float;
 precision mediump float;
 #endif
 
-varying vec2 textureUV;
+varying vec2 tuv;
 
-uniform sampler2D texture;
+uniform sampler2D tx;
 
 void main() {
-	gl_FragColor = texture2D(texture, textureUV.st).rgba;
+	gl_FragColor = texture2D(tx, tuv.st).rgba;
 }
 </script>
 <script src="src.js"></script>

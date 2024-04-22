@@ -11,14 +11,14 @@ const PLAYER = 0,
 
 let seed = 1,
 	gl,
-	vertexPositionBuffer,
-	vertexPositionLoc,
-	texturePositionBuffer,
-	texturePositionLoc,
-	perspective,
-	perspectiveLoc,
-	transformation,
-	transformationLoc,
+	vb,
+	vbl,
+	tp,
+	tpl,
+	pm,
+	pml,
+	tm,
+	tml,
 	width,
 	height,
 	halfWidth,
@@ -81,17 +81,17 @@ let seed = 1,
 	gameOver = 0
 
 function drawSprite(sprite, x, y, xm, ym) {
-	gl.bindBuffer(gl.ARRAY_BUFFER, texturePositionBuffer)
-	gl.vertexAttribPointer(texturePositionLoc, 2, gl.FLOAT, gl.FALSE, 0,
+	gl.bindBuffer(gl.ARRAY_BUFFER, tp)
+	gl.vertexAttribPointer(tpl, 2, gl.FLOAT, gl.FALSE, 0,
 		sprite << 5)
 
-	transformation[0] = halfTileSize * (xm || 1)
-	transformation[4] = halfTileSize * (ym || 1)
+	tm[0] = halfTileSize * (xm || 1)
+	tm[4] = halfTileSize * (ym || 1)
 
-	transformation[6] = x
-	transformation[7] = y
+	tm[6] = x
+	tm[7] = y
 
-	gl.uniformMatrix3fv(transformationLoc, gl.FALSE, transformation)
+	gl.uniformMatrix3fv(tml, gl.FALSE, tm)
 	gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
 }
 
@@ -324,8 +324,8 @@ function run() {
 	updateBlocks()
 
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer)
-	gl.vertexAttribPointer(vertexPositionLoc, 2, gl.FLOAT, gl.FALSE, 0, 0)
+	gl.bindBuffer(gl.ARRAY_BUFFER, vb)
+	gl.vertexAttribPointer(vbl, 2, gl.FLOAT, gl.FALSE, 0, 0)
 
 	draw(shakeX, shakeY)
 	showTouchControls && drawTouchControls()
@@ -546,14 +546,14 @@ function resize() {
 	btnDropY = btnRightY
 	btnSize = tileSize
 
-	perspective = new Float32Array([
+	pm = new Float32Array([
 		1, 0, 0,
 		0, width / height, 0,
 		0, 0, 1
 	])
-	gl.uniformMatrix3fv(perspectiveLoc, gl.FALSE, perspective)
+	gl.uniformMatrix3fv(pml, gl.FALSE, pm)
 
-	transformation = new Float32Array([
+	tm = new Float32Array([
 		1, 0, 0,
 		0, 1, 0,
 		0, 0, 1
@@ -691,22 +691,22 @@ function init(atlas) {
 	gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
 	gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, 1)
 
-	vertexPositionBuffer = createBuffer([
+	vb = createBuffer([
 		-1, 1,
 		-1, -1,
 		1, 1,
 		1, -1
 	])
-	texturePositionBuffer = createBuffer(atlas.coords)
+	tp = createBuffer(atlas.coords)
 
 	const program = createProgram(
 			document.getElementById('VS').textContent,
 			document.getElementById('FS').textContent)
 
-	vertexPositionLoc = getEnabledAttribLocation(program, 'vertexPosition')
-	texturePositionLoc = getEnabledAttribLocation(program, 'texturePosition')
-	perspectiveLoc = gl.getUniformLocation(program, 'perspective')
-	transformationLoc = gl.getUniformLocation(program, 'transformation')
+	vbl = getEnabledAttribLocation(program, 'vp')
+	tpl = getEnabledAttribLocation(program, 'tp')
+	pml = gl.getUniformLocation(program, 'p')
+	tml = gl.getUniformLocation(program, 't')
 
 	gl.activeTexture(gl.TEXTURE0)
 	gl.bindTexture(gl.TEXTURE_2D, createTexture(atlas.canvas))
