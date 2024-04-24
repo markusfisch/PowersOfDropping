@@ -45,16 +45,8 @@ let seed = 1,
 	tileSize,
 	halfTileSize,
 	showTouchControls = false,
-	btnLeftX,
-	btnLeftY,
-	btnRightX,
-	btnRightY,
-	btnUpX,
-	btnUpY,
-	btnDownX,
-	btnDownY,
-	btnDropX,
-	btnDropY,
+	btnsLength,
+	btns,
 	btnSize,
 	maxColsInView,
 	maxRowsInView,
@@ -96,11 +88,10 @@ function drawSprite(sprite, x, y, xm, ym) {
 }
 
 function drawTouchControls() {
-	drawSprite(RIGHT, btnLeftX, btnLeftY, -1)
-	drawSprite(RIGHT, btnRightX, btnRightY)
-	drawSprite(UP, btnUpX, btnUpY)
-	drawSprite(UP, btnDownX, btnDownY, 1, -1)
-	drawSprite(DROP, btnDropX, btnDropY)
+	for (let i = 0; i < btnsLength; ++i) {
+		const b = btns[i]
+		drawSprite(b.sprite, b.x, b.y, b.w, b.h)
+	}
 }
 
 function draw(shakeX, shakeY) {
@@ -535,10 +526,6 @@ function move(dx, dy) {
 	}
 }
 
-function inButton(bx, by, x, y) {
-	return Math.abs(bx - x) < btnSize && Math.abs(by - y) < btnSize
-}
-
 function tryRestart() {
 	if (now - gameOver > 1000) {
 		createMap()
@@ -564,21 +551,17 @@ function processTouch() {
 	for (let i = 0; i < pointersLength; ++i) {
 		const px = pointersX[i],
 			py = pointersY[i]
-		let col = 0, row = 0
-		if (inButton(btnLeftX, btnLeftY, px, py)) {
-			col = -1
-		} else if (inButton(btnRightX, btnRightY, px, py)) {
-			col = 1
-		} else if (inButton(btnUpX, btnUpY, px, py)) {
-			row = -1
-		} else if (inButton(btnDownX, btnDownY, px, py)) {
-			row = 1
+		let d
+		for (let i = 0; i < btnsLength; ++i) {
+			const b = btns[i]
+			if (Math.abs(b.x - px) < btnSize &&
+					Math.abs(b.y - py) < btnSize) {
+				d = b.click()
+				break
+			}
 		}
-		if (col || row) {
-			move(col, row)
-		}
-		if (inButton(btnDropX, btnDropY, px, py)) {
-			dropBlock(player.x, player.y)
+		if (d) {
+			move(d[0], d[1])
 		}
 	}
 }
@@ -707,6 +690,56 @@ function wireInputs() {
 	}, 0)
 }
 
+function layoutTouchControls() {
+	const margin = .2,
+		mag = width > height ? 2 : 3,
+		rightX = 1 - margin,
+		rightY = -yMax + margin * mag,
+		leftX = rightX - margin * mag,
+		leftY = rightY,
+		downX = rightX - margin * mag * .5,
+		downY = -yMax + margin,
+		upX = downX,
+		upY = leftY + (leftY - downY),
+		dropX = -1 + margin * 1.5,
+		dropY = rightY,
+		size = .1 / magnification
+	btns = [
+		{
+			sprite: RIGHT, w: size, h: size,
+			x: rightX,
+			y: rightY,
+			click: () => [1, 0]
+		},
+		{
+			sprite: RIGHT, w: -size, h: size,
+			x: leftX,
+			y: leftY,
+			click: () => [-1, 0]
+		},
+		{
+			sprite: UP, w: size, h: -size,
+			x: downX,
+			y: downY,
+			click: () => [0, 1]
+		},
+		{
+			sprite: UP, w: size, h: size,
+			x: upX,
+			y: upY,
+			click: () => [0, -1]
+		},
+		{
+			sprite: DROP, w: size, h: size,
+			x: dropX,
+			y: dropY,
+			click: () => dropBlock(player.x, player.y)
+		}
+	]
+	btnsLength = btns.length
+	btnSize = tileSize * size
+}
+
 function resize() {
 	width = gl.canvas.clientWidth
 	height = gl.canvas.clientHeight
@@ -735,19 +768,9 @@ function resize() {
 	viewX = viewDestX
 	viewY = viewDestY
 
-	const btnMargin = .2,
-		btnMag = width > height ? 2 : 3
-	btnRightX = 1 - btnMargin
-	btnRightY = -yMax + btnMargin * btnMag
-	btnLeftX = btnRightX - btnMargin * btnMag
-	btnLeftY = btnRightY
-	btnDownX = btnRightX - btnMargin * btnMag * .5
-	btnDownY = -yMax + btnMargin
-	btnUpX = btnDownX
-	btnUpY = btnLeftY + (btnLeftY - btnDownY)
-	btnDropX = -1 + btnMargin * 1.5
-	btnDropY = btnRightY
-	btnSize = tileSize
+	if (showTouchControls) {
+		layoutTouchControls()
+	}
 
 	pm = new Float32Array([
 		1, 0, 0,
@@ -969,10 +992,10 @@ function init(atlas) {
 	gl.clearColor(.066, .066, .066, 1)
 	gl.useProgram(program)
 
+	wireInputs()
+
 	window.onresize = resize
 	resize()
-
-	wireInputs()
 
 	last = Date.now() - 16
 	run()
