@@ -73,9 +73,6 @@ let seed = 1,
 	factor,
 	last,
 	shakeUntil = 0,
-	blockIncoming = false,
-	blockIncomingX,
-	blockIncomingY,
 	entitiesLength,
 	pointersLength,
 	player,
@@ -138,10 +135,13 @@ function draw(shakeX, shakeY) {
 		}
 	}
 	// Draw incoming marker.
-	if (blockIncoming) {
-		drawSprite(INCOMING,
-			vx + blockIncomingX * tileSize,
-			vy - blockIncomingY * tileSize)
+	for (let i = 0; i < fallingBlocksLength; ++i) {
+		const b = fallingBlocks[i]
+		if (b.height > 0) {
+			drawSprite(INCOMING,
+				vx + b.x * tileSize,
+				vy - b.y * tileSize)
+		}
 	}
 	// Draw entities.
 	for (let i = 0; i < entitiesLength; ++i) {
@@ -159,7 +159,7 @@ function draw(shakeX, shakeY) {
 	// Draw falling blocks.
 	for (let i = 0; i < fallingBlocksLength; ++i) {
 		const b = fallingBlocks[i], h = b.height
-		if (h > 0) {
+		if (h > 0 && b.fallAt < now) {
 			drawSprite(WALL,
 				vx + b.x * tileSize,
 				vy - b.y * tileSize + h,
@@ -169,7 +169,12 @@ function draw(shakeX, shakeY) {
 	}
 }
 
-function killPlayer() {
+function gameWon() {
+	//.innerHTML = "You won!"
+	gameOver = now // DEBUG
+}
+
+function gameLost() {
 	gameOver = now
 	player.alive = false
 	shake()
@@ -216,14 +221,13 @@ function impact(x, y) {
 	shake()
 	spawnDust(x, y)
 	set(x, y, WALL)
-	blockIncoming = false
 	clearAdjacentWalls(x, y)
 	for (let i = 0; i < entitiesLength; ++i) {
 		const e = entities[i]
 		if (Math.round(e.x) == x && Math.round(e.y) == y) {
 			e.alive = false
 			if (e === player) {
-				killPlayer()
+				gameLost()
 			}
 		}
 	}
@@ -232,6 +236,9 @@ function impact(x, y) {
 function updateBlocks() {
 	for (let i = 0; i < fallingBlocksLength; ++i) {
 		const o = fallingBlocks[i]
+		if (o.fallAt > now) {
+			continue
+		}
 		let h = o.height
 		if (h > 0) {
 			h -= .05 * factor
@@ -336,7 +343,7 @@ function findMove(e) {
 		if (d < 1) {
 			// Bust!
 			spawnDust(player.x, player.y, 4)
-			killPlayer()
+			gameLost()
 			return
 		} else if (d < 9) {
 			// Chase!
@@ -373,6 +380,7 @@ function executeMove(e) {
 }
 
 function updateEntities() {
+	let alive = 0
 	for (let i = 0; i < entitiesLength; ++i) {
 		const e = entities[i]
 		if (!e.alive) {
@@ -382,38 +390,41 @@ function updateEntities() {
 			const p = executeMove(e)
 			viewX += (viewDestX - viewX) * p
 			viewY += (viewDestY - viewY) * p
-		} else if (e.moveUntil < now &&
-				Math.round(e.destX) == Math.round(e.x) &&
-				Math.round(e.destY) == Math.round(e.y)) {
-			findMove(e)
 		} else {
-			executeMove(e)
+			++alive
+			if (e.moveUntil < now &&
+					Math.round(e.destX) == Math.round(e.x) &&
+					Math.round(e.destY) == Math.round(e.y)) {
+				findMove(e)
+			} else {
+				executeMove(e)
+			}
 		}
+	}
+	if (alive < 1) {
+		gameWon()
 	}
 }
 
 function dropBlock(x, y) {
+	x = Math.round(x)
+	y = Math.round(y)
 	for (let i = 0; i < fallingBlocksLength; ++i) {
 		const o = fallingBlocks[i]
-		if (o.height == 0) {
-			o.x = Math.round(x)
-			o.y = Math.round(y)
-			o.height = 1
+		if (o.height > 0 && o.x == x && o.y == y) {
 			return
 		}
 	}
-}
-
-function postDropBlock(x, y) {
-	if (blockIncoming) {
-		return
+	for (let i = 0; i < fallingBlocksLength; ++i) {
+		const o = fallingBlocks[i]
+		if (o.height == 0) {
+			o.x = x
+			o.y = y
+			o.height = 1
+			o.fallAt = now + 1500
+			return
+		}
 	}
-	blockIncoming = true
-	blockIncomingX = Math.round(x)
-	blockIncomingY = Math.round(y)
-	setTimeout(function() {
-		dropBlock(blockIncomingX, blockIncomingY)
-	}, 500)
 }
 
 function clearWallAt(x, y) {
@@ -427,15 +438,6 @@ function clearWallAt(x, y) {
 	map[o] = FLOOR
 	spawnDust(x, y, 4)
 	shake()
-}
-
-function clearWalls(x, y) {
-	x = Math.round(x)
-	y = Math.round(y)
-	clearWallAt(x - 1, y)
-	clearWallAt(x + 1, y)
-	clearWallAt(x, y - 1)
-	clearWallAt(x, y + 1)
 }
 
 function setViewDest(x, y) {
@@ -531,7 +533,7 @@ function processTouch() {
 			move(col, row)
 		}
 		if (inButton(btnDropX, btnDropY, px, py)) {
-			postDropBlock(player.x, player.y)
+			dropBlock(player.x, player.y)
 		}
 	}
 }
@@ -605,10 +607,7 @@ function processKey(keyCode) {
 		move(0, 1)
 		break
 	case 32:
-		postDropBlock(player.x, player.y)
-		break
-	case 13:
-		clearWalls(player.x, player.y)
+		dropBlock(player.x, player.y)
 		break
 	case 83: // s
 		magnification = magnification == .1
@@ -834,7 +833,8 @@ function createMap() {
 		fallingBlocks[i] = {
 			x: 0,
 			y: 0,
-			height: 0
+			height: 0,
+			fallAt: 0
 		}
 	}
 	mapCols = mapRows = 31
