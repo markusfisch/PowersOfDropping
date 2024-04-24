@@ -2,13 +2,14 @@
 
 const PLAYER = 0,
 	DUST = 1,
-	FLOOR = 2,
-	WALL = 3,
-	INCOMING = 4,
-	UP = 5,
-	RIGHT = 6,
-	DROP = 7,
-	ENEMY = 8,
+	FLOOR_ODD = 2,
+	FLOOR_EVEN = 3,
+	WALL = 4,
+	INCOMING = 5,
+	UP = 6,
+	RIGHT = 7,
+	DROP = 8,
+	ENEMY = 9,
 	directions = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}],
 	shakePattern = [.1, .4, .7, .3, .5, .2],
 	shakeLength = shakePattern.length,
@@ -20,7 +21,8 @@ const PLAYER = 0,
 	fallingBlocksLength = 4,
 	fallingBlocks = [],
 	entities = [],
-	map = [],
+	ground = [],
+	items = [],
 	nodes = [],
 	pointersX = [],
 	pointersY = []
@@ -111,7 +113,11 @@ function draw(shakeX, shakeY) {
 	let o = rt * mapCols + cl
 	for (let y = t, r = rt; r < rb; y -= tileSize, ++r, o += skip) {
 		for (let x = l, c = cl; c < cr; x += tileSize, ++c, ++o) {
-			drawSprite(map[o], x, y)
+			drawSprite(ground[o], x, y)
+			const item = items[o]
+			if (item) {
+				drawSprite(item, x, y)
+			}
 		}
 	}
 	// Draw dust.
@@ -194,14 +200,14 @@ function offset(x, y) {
 	return y * mapCols + x
 }
 
-function set(x, y, tile) {
-	map[offset(x, y)] = tile
+function setItem(x, y, tile) {
+	items[offset(x, y)] = tile
 }
 
 function span(offset, step, times) {
 	while (times-- > 0) {
 		const peek = offset + step
-		if (map[peek] != WALL) {
+		if (items[peek] != WALL) {
 			break
 		}
 		offset = peek
@@ -226,7 +232,7 @@ function clearAdjacentWalls(x, y) {
 		}
 	}
 	for (let i = mapCols * mapRows; i-- > 0; ) {
-		if (map[i] == WALL) {
+		if (items[i] == WALL) {
 			return
 		}
 	}
@@ -236,7 +242,7 @@ function clearAdjacentWalls(x, y) {
 function impact(x, y) {
 	shake()
 	spawnDust(x, y)
-	set(x, y, WALL)
+	setItem(x, y, WALL)
 	clearAdjacentWalls(x, y)
 	for (let i = 0; i < entitiesLength; ++i) {
 		const e = entities[i]
@@ -330,7 +336,7 @@ function findPath(e, target) {
 
 		current.neighbors.forEach(neighbor => {
 			if (!closedSet.includes(neighbor) &&
-					map[offset(neighbor.x, neighbor.y)] != WALL) {
+					items[offset(neighbor.x, neighbor.y)] != WALL) {
 				const tg = current.g + 1
 				let newPath = false
 				if (openSet.includes(neighbor)) {
@@ -448,10 +454,10 @@ function clearWallAt(x, y) {
 		return
 	}
 	const o = offset(x, y)
-	if (map[o] == FLOOR) {
+	if (items[o] != WALL) {
 		return
 	}
-	map[o] = FLOOR
+	items[o] = 0
 	spawnDust(x, y, 4)
 	shake()
 }
@@ -509,7 +515,7 @@ function run() {
 }
 
 function canMoveTo(x, y) {
-	return map[offset(x, y)] === FLOOR
+	return items[offset(x, y)] != WALL
 }
 
 function move(dx, dy) {
@@ -848,7 +854,7 @@ function maze(l, t, r, b) {
 				-1
 		for (let i = t, o = t * mapCols + x; i <= b; ++i, o += mapCols) {
 			if (i != y1 && i != y2) {
-				map[o] = WALL
+				items[o] = WALL
 			}
 		}
 	}
@@ -863,7 +869,7 @@ function maze(l, t, r, b) {
 				-1
 		for (let i = l, o = y * mapCols; i <= r; ++i) {
 			if (i != x1 && i != x2) {
-				map[o + i] = WALL
+				items[o + i] = WALL
 			}
 		}
 	}
@@ -914,7 +920,8 @@ function createMap() {
 	mapCols = mapRows = 31
 	for (let i = 0, y = 0; y < mapRows; ++y) {
 		for (let x = 0; x < mapCols; ++x, ++i) {
-			map[i] = FLOOR
+			ground[i] = i & 1 ? FLOOR_ODD : FLOOR_EVEN
+			items[i] = 0
 			nodes[i] = {
 				x: x,
 				y: y
@@ -942,7 +949,7 @@ function createMap() {
 	maze(2, 2, mapCols - 3, mapRows - 3)
 	for (let y = (mapRows / 2 - 4) | 0, ye = mapRows - y; y < ye; ++y) {
 		for (let x = (mapCols / 2 - 4) | 0, xe = mapCols - x; x < xe; ++x) {
-			set(x, y, FLOOR)
+			setItem(x, y, 0)
 		}
 	}
 	entities.length = 0
@@ -952,7 +959,7 @@ function createMap() {
 		do {
 			x = Math.round(random() * (mapCols - 1))
 			y = Math.round(random() * (mapRows - 1))
-		} while (map[offset(x, y)] == WALL ||
+		} while (items[offset(x, y)] == WALL ||
 				Math.abs(player.x - x) + Math.abs(player.y - y) < 8)
 		addEntity(ENEMY, x, y)
 	}
