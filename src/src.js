@@ -8,15 +8,18 @@ const PLAYER = 0,
 	UP = 5,
 	RIGHT = 6,
 	DROP = 7,
+	ENEMY = 8,
+	directions = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}],
 	shakePattern = [.1, .4, .7, .3, .5, .2],
 	shakeLength = shakePattern.length,
 	shakeDuration = 300,
 	moveDuration = 300,
 	dust = [],
-	dustLength = 50,
+	dustLength = 100,
 	dustDuration = 400,
 	fallingBlocksLength = 4,
 	fallingBlocks = [],
+	entities = [],
 	map = [],
 	pointersX = [],
 	pointersY = []
@@ -69,15 +72,12 @@ let seed = 1,
 	factor,
 	last,
 	shakeUntil = 0,
-	moveUntil = 0,
 	blockIncoming = false,
 	blockIncomingX,
 	blockIncomingY,
+	entitiesLength,
 	pointersLength,
-	playerDestX,
-	playerDestY,
-	playerX,
-	playerY,
+	player,
 	gameOver = 0
 
 function drawSprite(sprite, x, y, xm, ym) {
@@ -142,15 +142,18 @@ function draw(shakeX, shakeY) {
 			vx + blockIncomingX * tileSize,
 			vy - blockIncomingY * tileSize)
 	}
-	// Draw player.
-	if (!gameOver) {
-		drawSprite(PLAYER,
-			vx + playerX * tileSize,
-			vy - playerY * tileSize,
-			1,
-			1 + Math.min(.2, Math.max(
-				Math.abs(playerDestX - playerX),
-				Math.abs(playerDestY - playerY))))
+	// Draw entities.
+	for (let i = 0; i < entitiesLength; ++i) {
+		const e = entities[i]
+		if (e.alive) {
+			drawSprite(e.sprite,
+				vx + e.x * tileSize,
+				vy - e.y * tileSize,
+				1,
+				1 + Math.min(.2, Math.max(
+					Math.abs(e.destX - e.x),
+					Math.abs(e.destY - e.y))))
+		}
 	}
 	// Draw falling blocks.
 	for (let i = 0; i < fallingBlocksLength; ++i) {
@@ -163,6 +166,12 @@ function draw(shakeX, shakeY) {
 				1 + h * 3)
 		}
 	}
+}
+
+function killPlayer() {
+	gameOver = now
+	player.alive = false
+	shake()
 }
 
 function offset(x, y) {
@@ -190,12 +199,12 @@ function clearAdjacentWalls(x, y) {
 		right = span(o, 1, mapCols - x) % mapCols,
 		top = span(o, -mapCols, y) / mapCols | 0,
 		bottom = span(o, mapCols, mapRows - y) / mapCols | 0
-	if (right - left > 2) {
+	if (right - left > 1) {
 		for (let i = left; i <= right; ++i) {
 			clearWallAt(i, y)
 		}
 	}
-	if (bottom - top > 2) {
+	if (bottom - top > 1) {
 		for (let i = top; i <= bottom; ++i) {
 			clearWallAt(x, i)
 		}
@@ -208,8 +217,14 @@ function impact(x, y) {
 	set(x, y, WALL)
 	blockIncoming = false
 	clearAdjacentWalls(x, y)
-	if (Math.round(playerX) == x && Math.round(playerY) == y) {
-		gameOver = now
+	for (let i = 0; i < entitiesLength; ++i) {
+		const e = entities[i]
+		if (Math.round(e.x) == x && Math.round(e.y) == y) {
+			e.alive = false
+			if (e === player) {
+				killPlayer()
+			}
+		}
 	}
 }
 
@@ -224,6 +239,97 @@ function updateBlocks() {
 				impact(o.x, o.y)
 			}
 			o.height = h
+		}
+	}
+}
+
+function setDestination(e, x, y) {
+	e.destX = x
+	e.destY = y
+	e.moveUntil = now + moveDuration
+	spawnDust(e.x, e.y)
+}
+
+function soleClaim(me, x, y) {
+	for (let i = 0; i < entitiesLength; ++i) {
+		const e = entities[i]
+		if (e !== me && e !== player &&
+				Math.round(e.destX) == x &&
+				Math.round(e.destY) == y) {
+			return false
+		}
+	}
+	return true
+}
+
+function findMove(e) {
+	if (player.alive) {
+		const dx = player.x - e.x,
+			dy = player.y - e.y,
+			adx = Math.abs(Math.round(dx)),
+			ady = Math.abs(Math.round(dy)),
+			ad = adx + ady
+		if (ad < 1) {
+			// Bust!
+			spawnDust(player.x, player.y, 4)
+			killPlayer()
+			return
+		} else if (ad < 9) {
+			// Chase!
+			if (adx > ady) {
+				e.vx = dx > 0 ? 1 : -1
+				e.vy = 0
+			} else {
+				e.vx = 0
+				e.vy = dy > 0 ? 1 : -1
+			}
+		}
+	}
+	for (let i = 0, s = Math.round(Math.random() * 4); ; ++i) {
+		const tx = Math.round(e.x + e.vx),
+			ty = Math.round(e.y + e.vy)
+		if (tx > -1 && tx < mapCols &&
+				ty > -1 && ty < mapRows &&
+				canMoveTo(tx, ty) &&
+				soleClaim(e, tx, ty)) {
+			setDestination(e, tx, ty)
+			break
+		}
+		if (i > 3) {
+			break
+		}
+		const d = directions[(s + i) % 4]
+		e.vx = d.x
+		e.vy = d.y
+	}
+}
+
+function executeMove(e) {
+	if (e.moveUntil > now) {
+		const p = 1 - ((e.moveUntil - now) / moveDuration)
+		e.x += (e.destX - e.x) * p
+		e.y += (e.destY - e.y) * p
+		return p
+	}
+	return 0
+}
+
+function updateEntities() {
+	for (let i = 0; i < entitiesLength; ++i) {
+		const e = entities[i]
+		if (!e.alive) {
+			continue
+		}
+		if (e === player) {
+			const p = executeMove(e)
+			viewX += (viewDestX - viewX) * p
+			viewY += (viewDestY - viewY) * p
+		} else if (e.moveUntil < now &&
+				Math.round(e.destX) == Math.round(e.x) &&
+				Math.round(e.destY) == Math.round(e.y)) {
+			findMove(e)
+		} else {
+			executeMove(e)
 		}
 	}
 }
@@ -313,14 +419,7 @@ function run() {
 		shakeY = shakePattern[now % shakeLength] * p
 	}
 
-	if (moveUntil > now) {
-		const p = 1 - ((moveUntil - now) / moveDuration)
-		playerX += (playerDestX - playerX) * p
-		playerY += (playerDestY - playerY) * p
-		viewX += (viewDestX - viewX) * p
-		viewY += (viewDestY - viewY) * p
-	}
-
+	updateEntities()
 	updateBlocks()
 
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
@@ -336,19 +435,16 @@ function canMoveTo(x, y) {
 }
 
 function move(dx, dy) {
-	const x = Math.min(mapCols - 1, Math.max(0, playerDestX + dx)),
-		y = Math.min(mapRows - 1, Math.max(0, playerDestY + dy))
+	const x = Math.min(mapCols - 1, Math.max(0, player.destX + dx)),
+		y = Math.min(mapRows - 1, Math.max(0, player.destY + dy))
 	if (canMoveTo(x, y)) {
-		playerDestX = x
-		playerDestY = y
+		setDestination(player, x, y)
 		if (Math.abs(viewDestX + x * tileSize) > viewMoveXAt) {
 			viewDestX -= tileSize * dx
 		}
 		if (Math.abs(-viewDestY + y * tileSize) > viewMoveYAt) {
 			viewDestY += tileSize * dy
 		}
-		moveUntil = now + moveDuration
-		spawnDust(playerX, playerY)
 	}
 }
 
@@ -377,7 +473,7 @@ function processTouch() {
 			move(col, row)
 		}
 		if (inButton(btnDropX, btnDropY, px, py)) {
-			postDropBlock(playerX, playerY)
+			postDropBlock(player.x, player.y)
 		}
 	}
 }
@@ -451,10 +547,10 @@ function processKey(keyCode) {
 		move(0, 1)
 		break
 	case 32:
-		postDropBlock(playerX, playerY)
+		postDropBlock(player.x, player.y)
 		break
 	case 13:
-		clearWalls(playerX, playerY)
+		clearWalls(player.x, player.y)
 		break
 	case 83: // s
 		magnification = magnification == .1
@@ -528,7 +624,7 @@ function resize() {
 	viewMoveXAt = .7
 	viewMoveYAt = yMax * viewMoveXAt
 
-	setViewDest(playerX, playerY)
+	setViewDest(player.x, player.y)
 	viewX = viewDestX
 	viewY = viewDestY
 
@@ -652,6 +748,22 @@ function random() {
 	return (seed = (seed * 9301 + 49297) % 233280) / 233280
 }
 
+function addEntity(sprite, x, y) {
+	const e = {
+		sprite: sprite,
+		alive: true,
+		moveUntil: 0,
+		x: x,
+		y: y,
+		destX: x,
+		destY: y,
+		vx: random() > .5 ? -1 : 1,
+		vy: 0
+	}
+	entities.push(e)
+	return e
+}
+
 function createMap() {
 	for (let i = dustLength; i-- > 0;) {
 		dust[i] = {
@@ -677,8 +789,19 @@ function createMap() {
 			set(x, y, FLOOR)
 		}
 	}
-	playerX = playerDestX = mapCols >> 1
-	playerY = playerDestY = mapRows >> 1
+	entities.length = 0
+	player = addEntity(PLAYER, mapCols >> 1, mapRows >> 1)
+	now = Date.now()
+	for (let i = 0; i < 4; ++i) {
+		let x, y
+		do {
+			x = Math.round(random() * (mapCols - 1))
+			y = Math.round(random() * (mapRows - 1))
+		} while (map[offset(x, y)] == WALL ||
+				Math.abs(player.x - x) + Math.abs(player.y - y) < 8)
+		addEntity(ENEMY, x, y)
+	}
+	entitiesLength = entities.length
 }
 
 function init(atlas) {
