@@ -35,6 +35,7 @@ let seed = 1,
 	pml,
 	tm,
 	tml,
+	hud,
 	width,
 	height,
 	halfWidth,
@@ -76,7 +77,7 @@ let seed = 1,
 	entitiesLength,
 	pointersLength,
 	player,
-	gameOver = 0
+	gameOver
 
 function drawSprite(sprite, x, y, xm, ym) {
 	gl.bindBuffer(gl.ARRAY_BUFFER, tp)
@@ -169,12 +170,25 @@ function draw(shakeX, shakeY) {
 	}
 }
 
+function say(m) {
+	hud.innerHTML = m
+	hud.style.animation = "pop 0.25s ease-in-out forwards"
+	hud.style.display = "block"
+}
+
 function gameWon() {
-	//.innerHTML = "You won!"
-	gameOver = now // DEBUG
+	say("<h1>You won!</h1>")
+	gameOver = now
+	for (let i = 0; i < entitiesLength; ++i) {
+		const e = entities[i]
+		if (e !== player) {
+			e.alive = false
+		}
+	}
 }
 
 function gameLost() {
+	say("<h1>You lost!</h1>Tap to try again.")
 	gameOver = now
 	player.alive = false
 	shake()
@@ -215,6 +229,12 @@ function clearAdjacentWalls(x, y) {
 			clearWallAt(x, i)
 		}
 	}
+	for (let i = mapCols * mapRows; i-- > 0; ) {
+		if (map[i] == WALL) {
+			return
+		}
+	}
+	gameWon()
 }
 
 function impact(x, y) {
@@ -289,11 +309,11 @@ function findPath(e, target) {
 		let low = 0
 		for (let i = 0; i < openSet.length; ++i) {
 			if (openSet[i].f < openSet[low].f) {
-				low = i;
+				low = i
 			}
 		}
 
-		const current = openSet[low];
+		const current = openSet[low]
 		if (current === goal) {
 			const path = []
 			let n = current
@@ -315,8 +335,8 @@ function findPath(e, target) {
 		current.neighbors.forEach(neighbor => {
 			if (!closedSet.includes(neighbor) &&
 					map[offset(neighbor.x, neighbor.y)] != WALL) {
-				const tg = current.g + 1;
-				let newPath = false;
+				const tg = current.g + 1
+				let newPath = false
 				if (openSet.includes(neighbor)) {
 					if (tg < neighbor.g) {
 						neighbor.g = tg
@@ -401,7 +421,7 @@ function updateEntities() {
 			}
 		}
 	}
-	if (alive < 1) {
+	if (!gameOver && alive < 1) {
 		gameWon()
 	}
 }
@@ -512,8 +532,16 @@ function inButton(bx, by, x, y) {
 	return Math.abs(bx - x) < btnSize && Math.abs(by - y) < btnSize
 }
 
+function tryRestart() {
+	if (now - gameOver > 1000) {
+		createMap()
+		resize()
+	}
+}
+
 function processTouch() {
 	if (gameOver) {
+		tryRestart()
 		return
 	}
 	for (let i = 0; i < pointersLength; ++i) {
@@ -587,6 +615,7 @@ function pointerDown(event) {
 
 function processKey(keyCode) {
 	if (gameOver) {
+		tryRestart()
 		return
 	}
 	switch (keyCode) {
@@ -822,6 +851,8 @@ function addEntity(sprite, x, y) {
 }
 
 function createMap() {
+	hud.style.display = "none"
+	gameOver = 0
 	for (let i = dustLength; i-- > 0;) {
 		dust[i] = {
 			x: 0,
@@ -873,7 +904,6 @@ function createMap() {
 	}
 	entities.length = 0
 	player = addEntity(PLAYER, mapCols >> 1, mapRows >> 1)
-	now = Date.now()
 	for (let i = 0; i < 4; ++i) {
 		let x, y
 		do {
@@ -992,6 +1022,7 @@ function createAtlas(sources) {
 }
 
 window.onload = function() {
+	hud = document.getElementById('H')
 	const sources = [],
 		gs = document.getElementsByTagName('g')
 	for (let i = 0, l = gs.length; i < l; ++i) {
