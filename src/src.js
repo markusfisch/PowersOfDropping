@@ -110,11 +110,25 @@ function draw(shakeX, shakeY) {
 		rb = Math.min(rt + maxRowsInView, mapRows),
 		skip = mapCols - (cr - cl),
 		l = vx + cl * tileSize,
-		t = vy - rt * tileSize
-	let o = rt * mapCols + cl
-	for (let y = t, r = rt; r < rb; y -= tileSize, ++r, o += skip) {
+		t = vy - rt * tileSize,
+		os = rt * mapCols + cl
+	for (let o = os, y = t, r = rt; r < rb; y -= tileSize, ++r, o += skip) {
 		for (let x = l, c = cl; c < cr; x += tileSize, ++c, ++o) {
 			drawSprite(ground[o], x, y)
+		}
+	}
+	// Draw incoming marker.
+	for (let i = 0; i < fallingBlocksLength; ++i) {
+		const b = fallingBlocks[i]
+		if (b.height > 0) {
+			drawSprite(INCOMING,
+				vx + b.x * tileSize,
+				vy - b.y * tileSize)
+		}
+	}
+	// Draw items.
+	for (let o = os, y = t, r = rt; r < rb; y -= tileSize, ++r, o += skip) {
+		for (let x = l, c = cl; c < cr; x += tileSize, ++c, ++o) {
 			const item = items[o]
 			if (item) {
 				drawSprite(item, x, y)
@@ -132,15 +146,6 @@ function draw(shakeX, shakeY) {
 				vy - d.y * tileSize,
 				size,
 				size)
-		}
-	}
-	// Draw incoming marker.
-	for (let i = 0; i < fallingBlocksLength; ++i) {
-		const b = fallingBlocks[i]
-		if (b.height > 0) {
-			drawSprite(INCOMING,
-				vx + b.x * tileSize,
-				vy - b.y * tileSize)
 		}
 	}
 	// Draw entities.
