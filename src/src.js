@@ -11,7 +11,9 @@ const PLAYER = 0,
 	DROP = 8,
 	ENEMY_ODD = 9,
 	ENEMY_EVEN = 10,
+	EAGLE_EYE = 11,
 	directions = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}],
+	defaultMag = .1,
 	shakePattern = [.1, .4, .7, .3, .5, .2],
 	shakeLength = shakePattern.length,
 	shakeDuration = 300,
@@ -43,7 +45,7 @@ let seed = 1,
 	height,
 	halfWidth,
 	halfHeight,
-	magnification = .1,
+	magnification = defaultMag,
 	yMax,
 	tileSize,
 	halfTileSize,
@@ -280,6 +282,25 @@ function updateBlocks() {
 	}
 }
 
+function toggleEagleEye() {
+	magnification = magnification == defaultMag
+			? 1 / Math.max(mapCols, mapRows)
+			: defaultMag
+	resize()
+}
+
+function digestItem(e) {
+	const o = offset(Math.round(e.x), Math.round(e.y))
+	switch (items[o]) {
+	case EAGLE_EYE:
+		if (e === player) {
+			toggleEagleEye()
+		}
+		items[o] = 0
+		break
+	}
+}
+
 function setDestination(e, x, y) {
 	e.destX = x
 	e.destY = y
@@ -403,6 +424,7 @@ function executeMove(e) {
 		const p = 1 - ((e.moveUntil - now) / moveDuration)
 		e.x += (e.destX - e.x) * p
 		e.y += (e.destY - e.y) * p
+		digestItem(e)
 		return p
 	}
 	return 0
@@ -456,6 +478,14 @@ function dropBlock(x, y) {
 	}
 }
 
+function pickItem() {
+	const r = Math.random()
+	if (r < .05) {
+		return EAGLE_EYE
+	}
+	return 0
+}
+
 function clearWallAt(x, y) {
 	if (x < 0 || x >= mapCols || y < 0 || y >= mapRows) {
 		return
@@ -464,7 +494,7 @@ function clearWallAt(x, y) {
 	if (items[o] != WALL) {
 		return
 	}
-	items[o] = 0
+	items[o] = pickItem()
 	spawnDust(x, y, 4)
 	shake()
 }
@@ -541,6 +571,7 @@ function move(dx, dy) {
 
 function tryRestart() {
 	if (now - gameOver > 1000) {
+		magnification = defaultMag
 		createMap()
 		resize()
 		hideHud()
@@ -655,12 +686,6 @@ function processKey(keyCode) {
 	case 32:
 		dropBlock(player.x, player.y)
 		break
-	case 83: // s
-		magnification = magnification == .1
-				? 1 / Math.max(mapCols, mapRows)
-				: .1
-		resize()
-		break
 	}
 }
 
@@ -716,7 +741,7 @@ function layoutTouchControls() {
 		upY = leftY + (leftY - downY),
 		dropX = -1 + margin * 1.5,
 		dropY = rightY,
-		size = .1 / magnification
+		size = defaultMag / magnification
 	btns = [
 		{
 			sprite: RIGHT, w: size, h: size,
