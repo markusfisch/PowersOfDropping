@@ -21,6 +21,7 @@ const PLAYER = 0,
 	fallingBlocks = [],
 	entities = [],
 	map = [],
+	nodes = [],
 	pointersX = [],
 	pointersY = []
 
@@ -262,27 +263,84 @@ function soleClaim(me, x, y) {
 	return true
 }
 
+function dist(a, b) {
+	return Math.abs(Math.round(a.x - b.x)) + Math.abs(Math.round(a.y - b.y))
+}
+
+function findPath(e, target) {
+	for (let i = mapCols * mapRows; i-- > 0; ) {
+		const n = nodes[i]
+		n.p = null
+		n.g = n.f = n.h = 0
+	}
+	const start = nodes[offset(Math.round(e.x), Math.round(e.y))],
+		goal = nodes[offset(Math.round(target.x), Math.round(target.y))],
+		openSet = [start],
+		closedSet = []
+	start.h = dist(e, target)
+	while (openSet.length > 0) {
+		let low = 0
+		for (let i = 0; i < openSet.length; ++i) {
+			if (openSet[i].f < openSet[low].f) {
+				low = i;
+			}
+		}
+
+		const current = openSet[low];
+		if (current === goal) {
+			const path = []
+			let n = current
+			path.push(n)
+			for (; n.p; n = n.p) {
+				path.push(n.p)
+			}
+			const rev = path.reverse()
+			if (rev.length > 1) {
+				e.vx = rev[1].x - Math.round(e.x)
+				e.vy = rev[1].y - Math.round(e.y)
+			}
+			return
+		}
+
+		openSet.splice(low, 1)
+		closedSet.push(current)
+
+		current.neighbors.forEach(neighbor => {
+			if (!closedSet.includes(neighbor) &&
+					map[offset(neighbor.x, neighbor.y)] != WALL) {
+				const tg = current.g + 1;
+				let newPath = false;
+				if (openSet.includes(neighbor)) {
+					if (tg < neighbor.g) {
+						neighbor.g = tg
+						newPath = true
+					}
+				} else {
+					neighbor.g = tg
+					newPath = true
+					openSet.push(neighbor)
+				}
+				if (newPath) {
+					neighbor.h = dist(neighbor, goal)
+					neighbor.f = neighbor.g + neighbor.h
+					neighbor.p = current
+				}
+			}
+		})
+	}
+}
+
 function findMove(e) {
 	if (player.alive) {
-		const dx = player.x - e.x,
-			dy = player.y - e.y,
-			adx = Math.abs(Math.round(dx)),
-			ady = Math.abs(Math.round(dy)),
-			ad = adx + ady
-		if (ad < 1) {
+		const d = dist(e, player)
+		if (d < 1) {
 			// Bust!
 			spawnDust(player.x, player.y, 4)
 			killPlayer()
 			return
-		} else if (ad < 9) {
+		} else if (d < 9) {
 			// Chase!
-			if (adx > ady) {
-				e.vx = dx > 0 ? 1 : -1
-				e.vy = 0
-			} else {
-				e.vx = 0
-				e.vy = dy > 0 ? 1 : -1
-			}
+			findPath(e, player)
 		}
 	}
 	for (let i = 0, s = Math.round(Math.random() * 4); ; ++i) {
@@ -780,8 +838,32 @@ function createMap() {
 		}
 	}
 	mapCols = mapRows = 31
-	for (let i = mapCols * mapRows; i--;) {
-		map[i] = FLOOR
+	for (let i = 0, y = 0; y < mapRows; ++y) {
+		for (let x = 0; x < mapCols; ++x, ++i) {
+			map[i] = FLOOR
+			nodes[i] = {
+				x: x,
+				y: y
+			}
+		}
+	}
+	for (let i = 0, y = 0; y < mapRows; ++y) {
+		for (let x = 0; x < mapCols; ++x, ++i) {
+			const neighbors = []
+			if (x > 0) {
+				neighbors.push(nodes[offset(x - 1, y)])
+			}
+			if (x < mapCols - 1) {
+				neighbors.push(nodes[offset(x + 1, y)])
+			}
+			if (y > 0) {
+				neighbors.push(nodes[offset(x, y - 1)])
+			}
+			if (y < mapRows - 1) {
+				neighbors.push(nodes[offset(x, y + 1)])
+			}
+			nodes[i].neighbors = neighbors
+		}
 	}
 	maze(2, 2, mapCols - 3, mapRows - 3)
 	for (let y = (mapRows / 2 - 4) | 0, ye = mapRows - y; y < ye; ++y) {
