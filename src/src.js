@@ -77,6 +77,7 @@ let seed = 1,
 	entitiesLength,
 	pointersLength,
 	player,
+	introOver = false,
 	gameOver
 
 function drawSprite(sprite, x, y, xm, ym) {
@@ -168,6 +169,10 @@ function draw(shakeX, shakeY) {
 				1 + h * 3)
 		}
 	}
+}
+
+function hideHud() {
+	hud.style.display = "none"
 }
 
 function say(m) {
@@ -499,8 +504,10 @@ function run() {
 		shakeY = shakePattern[now % shakeLength] * p
 	}
 
-	updateEntities()
-	updateBlocks()
+	if (introOver) {
+		updateEntities()
+		updateBlocks()
+	}
 
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	gl.bindBuffer(gl.ARRAY_BUFFER, vb)
@@ -536,10 +543,20 @@ function tryRestart() {
 	if (now - gameOver > 1000) {
 		createMap()
 		resize()
+		hideHud()
 	}
 }
 
+function hideIntro() {
+	hideHud()
+	introOver = true
+}
+
 function processTouch() {
+	if (!introOver) {
+		hideIntro()
+		return
+	}
 	if (gameOver) {
 		tryRestart()
 		return
@@ -614,6 +631,10 @@ function pointerDown(event) {
 }
 
 function processKey(keyCode) {
+	if (!introOver) {
+		hideIntro()
+		return
+	}
 	if (gameOver) {
 		tryRestart()
 		return
@@ -851,7 +872,6 @@ function addEntity(sprite, x, y) {
 }
 
 function createMap() {
-	hud.style.display = "none"
 	gameOver = 0
 	for (let i = dustLength; i-- > 0;) {
 		dust[i] = {

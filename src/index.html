@@ -34,8 +34,9 @@ html, body {
 	position: fixed;
 	left: 0; top: 0;
 	right: 0; bottom: 0;
-	padding: 40vh 1em;
+	padding: 30vh 2em;
 	text-align: center;
+	animation: pop 0.25s ease-in-out forwards;
 }
 @keyframes pop {
 	0% { background: transparent; }
@@ -81,7 +82,10 @@ html, body {
 	<ellipse style="fill:#fff" cx="50" cy="70" rx="20" ry="14"/>
 </g>
 </svg>
-<div id="H"></div>
+<div id="H"><p>Use &lt;space&gt; or the left button to drop blocks.</p>
+<p>Connect walls to remove the line and/or column.</p>
+<h2>Clear all walls</h2>or
+<h2>hit all enemies</h2>to win!</div>
 <script id="VS" type="x-shader/x-vertex">
 attribute vec2 vp;
 attribute vec2 tp;
