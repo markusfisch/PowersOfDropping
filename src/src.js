@@ -9,7 +9,8 @@ const PLAYER = 0,
 	UP = 6,
 	RIGHT = 7,
 	DROP = 8,
-	ENEMY = 9,
+	ENEMY_ODD = 9,
+	ENEMY_EVEN = 10,
 	directions = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}],
 	shakePattern = [.1, .4, .7, .3, .5, .2],
 	shakeLength = shakePattern.length,
@@ -143,10 +144,11 @@ function draw(shakeX, shakeY) {
 		}
 	}
 	// Draw entities.
+	const frame = now / moveDuration | 0
 	for (let i = 0; i < entitiesLength; ++i) {
 		const e = entities[i]
 		if (e.alive) {
-			drawSprite(e.sprite,
+			drawSprite(e.sprite(frame),
 				vx + e.x * tileSize,
 				vy - e.y * tileSize,
 				1,
@@ -884,9 +886,9 @@ function random() {
 	return (seed = (seed * 9301 + 49297) % 233280) / 233280
 }
 
-function addEntity(sprite, x, y) {
-	const e = {
-		sprite: sprite,
+function addEntity(sprites, x, y) {
+	const sl = sprites.length, e = {
+		sprite: (f) => sprites[f % sl],
 		alive: true,
 		moveUntil: 0,
 		x: x,
@@ -953,7 +955,7 @@ function createMap() {
 		}
 	}
 	entities.length = 0
-	player = addEntity(PLAYER, mapCols >> 1, mapRows >> 1)
+	player = addEntity([PLAYER], mapCols >> 1, mapRows >> 1)
 	for (let i = 0; i < 4; ++i) {
 		let x, y
 		do {
@@ -961,7 +963,7 @@ function createMap() {
 			y = Math.round(random() * (mapRows - 1))
 		} while (items[offset(x, y)] == WALL ||
 				Math.abs(player.x - x) + Math.abs(player.y - y) < 8)
-		addEntity(ENEMY, x, y)
+		addEntity([ENEMY_ODD, ENEMY_EVEN], x, y)
 	}
 	entitiesLength = entities.length
 }

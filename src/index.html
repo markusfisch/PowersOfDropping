@@ -41,7 +41,7 @@ html, body {
 @keyframes pop {
 	0% { background: transparent; }
 	50% { transform: scale(1.5); }
-	100% { background: rgba(0, 0, 0, .5); }
+	100% { background: rgba(0, 0, 0, .7); }
 }
 </style>
 </head>
@@ -78,11 +78,17 @@ html, body {
 <!-- 8: drop button --><g>
 	<circle style="fill:#fff" cx="50" cy="50" r="35"/>
 </g>
-<!-- 9: enemy --><g>
+<!-- 9: enemy odd --><g>
 	<circle style="fill:#111" cx="50" cy="50" r="45"/>
 	<circle style="fill:#fff" cx="30" cy="40" r="8"/>
 	<circle style="fill:#fff" cx="70" cy="40" r="8"/>
 	<ellipse style="fill:#fff" cx="50" cy="70" rx="20" ry="14"/>
+</g>
+<!-- 10: enemy even --><g>
+	<circle style="fill:#111" cx="50" cy="50" r="45"/>
+	<circle style="fill:#fff" cx="30" cy="40" r="8"/>
+	<circle style="fill:#fff" cx="70" cy="40" r="8"/>
+	<ellipse style="fill:#fff" cx="50" cy="70" rx="20" ry="7"/>
 </g>
 </svg>
 <div id="H"><p>Use &lt;space&gt; or the left button to drop blocks.</p>
