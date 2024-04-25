@@ -323,22 +323,23 @@ function findRandomSpot() {
 function digestItem(e) {
 	const o = offset(Math.round(e.x), Math.round(e.y))
 	switch (items[o]) {
+	case 0:
+		return
 	case PORTAL:
+		const p = findRandomSpot()
+		e.x = e.destX = p[0]
+		e.y = e.destY = p[1]
 		if (e === player) {
-			const p = findRandomSpot()
-			player.x = player.destX = p[0]
-			player.y = player.destY = p[1]
-			setViewDest(player.x, player.y)
+			setViewDest(e.x, e.y)
 		}
-		items[o] = 0
 		break
 	case EAGLE_EYE:
 		if (e === player) {
 			toggleEagleEye()
 		}
-		items[o] = 0
 		break
 	}
+	items[o] = 0
 }
 
 function setDestination(e, x, y) {
