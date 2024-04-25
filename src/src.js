@@ -12,6 +12,7 @@ const PLAYER = 0,
 	ENEMY_ODD = 9,
 	ENEMY_EVEN = 10,
 	EAGLE_EYE = 11,
+	PORTAL = 12,
 	directions = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}],
 	defaultMag = .1,
 	shakePattern = [.1, .4, .7, .3, .5, .2],
@@ -289,9 +290,36 @@ function toggleEagleEye() {
 	resize()
 }
 
+function findRandomSpot() {
+	for (let t = 0; t < 1000; ++t) {
+		const x = Math.round(random() * (mapCols - 1)),
+			y = Math.round(random() * (mapRows - 1))
+		if (items[offset(x, y)]) {
+			continue
+		}
+		for (let i = 0; i < entitiesLength; ++i) {
+			const e = entities[i]
+			if (Math.abs(e.x - x) + Math.abs(e.y - y) < 8) {
+				continue
+			}
+		}
+		return [x, y]
+	}
+	return [0, 0]
+}
+
 function digestItem(e) {
 	const o = offset(Math.round(e.x), Math.round(e.y))
 	switch (items[o]) {
+	case PORTAL:
+		if (e === player) {
+			const p = findRandomSpot()
+			player.x = player.destX = p[0]
+			player.y = player.destY = p[1]
+			setViewDest(player.x, player.y)
+		}
+		items[o] = 0
+		break
 	case EAGLE_EYE:
 		if (e === player) {
 			toggleEagleEye()
@@ -482,6 +510,8 @@ function pickItem() {
 	const r = Math.random()
 	if (r < .05) {
 		return EAGLE_EYE
+	} else if (r < .1) {
+		return PORTAL
 	}
 	return 0
 }
@@ -994,16 +1024,11 @@ function createLevel() {
 			setItem(x, y, 0)
 		}
 	}
-	entities.length = 0
+	entities.length = entitiesLength = 0
 	player = addEntity([PLAYER], mapCols >> 1, mapRows >> 1)
 	for (let i = 0, max = 1 + level / 3 | 0; i < max; ++i) {
-		let x, y
-		do {
-			x = Math.round(random() * (mapCols - 1))
-			y = Math.round(random() * (mapRows - 1))
-		} while (items[offset(x, y)] == WALL ||
-				Math.abs(player.x - x) + Math.abs(player.y - y) < 8)
-		addEntity([ENEMY_ODD, ENEMY_EVEN], x, y)
+		const spot = findRandomSpot()
+		addEntity([ENEMY_ODD, ENEMY_EVEN], spot[0], spot[1])
 	}
 	entitiesLength = entities.length
 }
