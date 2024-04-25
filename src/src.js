@@ -9,8 +9,8 @@ const PLAYER = 0,
 	UP = 6,
 	RIGHT = 7,
 	DROP = 8,
-	ENEMY_ODD = 9,
-	ENEMY_EVEN = 10,
+	CATCHER_ODD = 9,
+	CATCHER_EVEN = 10,
 	EAGLE_EYE = 11,
 	PORTAL = 12,
 	directions = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}],
@@ -1026,7 +1026,7 @@ function createLevel() {
 	player = addEntity([PLAYER], mapCols >> 1, mapRows >> 1)
 	for (let i = 0, max = 1 + level / 3 | 0; i < max; ++i) {
 		const spot = findRandomSpot()
-		addEntity([ENEMY_ODD, ENEMY_EVEN], spot[0], spot[1])
+		addEntity([CATCHER_ODD, CATCHER_EVEN], spot[0], spot[1])
 	}
 	entitiesLength = entities.length
 }
