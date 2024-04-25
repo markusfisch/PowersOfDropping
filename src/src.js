@@ -4,7 +4,7 @@ const PLAYER = 0,
 	DUST = 1,
 	FLOOR_ODD = 2,
 	FLOOR_EVEN = 3,
-	WALL = 4,
+	BLOCK = 4,
 	INCOMING = 5,
 	UP = 6,
 	RIGHT = 7,
@@ -171,7 +171,7 @@ function draw(shakeX, shakeY) {
 	for (let i = 0; i < fallingBlocksLength; ++i) {
 		const b = fallingBlocks[i], h = b.height
 		if (h > 0 && b.fallAt < now) {
-			drawSprite(WALL,
+			drawSprite(BLOCK,
 				vx + b.x * tileSize,
 				vy - b.y * tileSize + h,
 				1,
@@ -215,7 +215,7 @@ function setItem(x, y, tile) {
 function span(offset, step, times) {
 	while (times-- > 0) {
 		const peek = offset + step
-		if (items[peek] != WALL) {
+		if (items[peek] != BLOCK) {
 			break
 		}
 		offset = peek
@@ -240,7 +240,7 @@ function clearAdjacentWalls(x, y) {
 		}
 	}
 	for (let i = mapCols * mapRows; i-- > 0; ) {
-		if (items[i] == WALL) {
+		if (items[i] == BLOCK) {
 			return
 		}
 	}
@@ -250,7 +250,7 @@ function clearAdjacentWalls(x, y) {
 function impact(x, y) {
 	shake()
 	spawnDust(x, y)
-	setItem(x, y, WALL)
+	setItem(x, y, BLOCK)
 	clearAdjacentWalls(x, y)
 	for (let i = 0; i < entitiesLength; ++i) {
 		const e = entities[i]
@@ -390,7 +390,7 @@ function findPath(e, target) {
 
 		current.neighbors.forEach(neighbor => {
 			if (!closedSet.includes(neighbor) &&
-					items[offset(neighbor.x, neighbor.y)] != WALL) {
+					items[offset(neighbor.x, neighbor.y)] != BLOCK) {
 				const tg = current.g + 1
 				let newPath = false
 				if (openSet.includes(neighbor)) {
@@ -519,7 +519,7 @@ function clearWallAt(x, y) {
 		return
 	}
 	const o = offset(x, y)
-	if (items[o] != WALL) {
+	if (items[o] != BLOCK) {
 		return
 	}
 	items[o] = pickItem()
@@ -580,7 +580,7 @@ function run() {
 }
 
 function canMoveTo(x, y) {
-	return items[offset(x, y)] != WALL
+	return items[offset(x, y)] != BLOCK
 }
 
 function move(dx, dy) {
@@ -918,7 +918,7 @@ function maze(l, t, r, b) {
 				-1
 		for (let i = t, o = t * mapCols + x; i <= b; ++i, o += mapCols) {
 			if (i != y1 && i != y2) {
-				items[o] = WALL
+				items[o] = BLOCK
 			}
 		}
 	}
@@ -933,7 +933,7 @@ function maze(l, t, r, b) {
 				-1
 		for (let i = l, o = y * mapCols; i <= r; ++i) {
 			if (i != x1 && i != x2) {
-				items[o + i] = WALL
+				items[o + i] = BLOCK
 			}
 		}
 	}
