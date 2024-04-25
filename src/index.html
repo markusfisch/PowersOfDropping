@@ -44,14 +44,22 @@ html, body {
 h1 {
 	margin: 0 0 1em; padding: 0;
 }
-.B, .S {
+#S {
+	position: fixed;
+	right: 0; top: 0;
+	text-align: right;
+	padding: .4em;
+	font-family: monospace;
+	font-size: 80%;
+}
+.B, .K {
 	padding: 1em;
 	border-radius: .2em;
 }
 .B {
 	background: #fff; color: #111;
 }
-.S {
+.K {
 	padding: .2em;
 	font-size: 80%;
 	border: 2px solid #111;
@@ -117,10 +125,11 @@ h1 {
 	<circle style="fill:#111;stroke:#fff;stroke-width:6" cx="50" cy="50" r="40"/>
 </g>
 </svg>
-<div id="H"><div class="B">Use <span class="S">SPACE</span>
+<div id="H"><div class="B">Use <span id="K">SPACE</span>
 or the left button to drop blocks.<br/><br/>
 Connect walls to remove a line or column.<br/><br/>
 Clear all walls or hit all catchers to win!</div></div>
+<div id="S"></span>
 <script id="VS" type="x-shader/x-vertex">
 attribute vec2 vp;
 attribute vec2 tp;

@@ -42,6 +42,9 @@ let seed = 1,
 	tm,
 	tml,
 	hud,
+	scores,
+	score = 1000,
+	nextScoreUpdate = 0,
 	width,
 	height,
 	halfWidth,
@@ -187,7 +190,11 @@ function say(m) {
 }
 
 function gameWon() {
-	say(++level >= 14
+	if (gameOver) {
+		return
+	}
+	score += 1000
+	say(++level >= 15
 			? "<h1>CONGRATS</h1>You beat the game!"
 			: `<h1>LEVEL ${level} WON!</h1>Tap to proceed…`)
 	gameOver = now
@@ -200,6 +207,9 @@ function gameWon() {
 }
 
 function gameLost() {
+	if (gameOver) {
+		return
+	}
 	say("<h1>LOST!</h1>Tap to try again…")
 	gameOver = now
 	player.alive = false
@@ -260,6 +270,8 @@ function impact(x, y) {
 			e.alive = false
 			if (e === player) {
 				gameLost()
+			} else {
+				score += 1000
 			}
 		}
 	}
@@ -524,6 +536,7 @@ function clearWallAt(x, y) {
 	if (items[o] != BLOCK) {
 		return
 	}
+	score += 1
 	items[o] = pickItem()
 	spawnDust(x, y, 4)
 	shake()
@@ -569,6 +582,14 @@ function run() {
 	}
 
 	if (introOver) {
+		if (gameOver == 0 && nextScoreUpdate < now) {
+			nextScoreUpdate = now + 1000
+			score -= 1
+			scores.innerHTML = `L:${level + 1} S:${score}`
+			if (score <= 0 && !gameOver) {
+				gameLost()
+			}
+		}
 		updateEntities()
 		updateBlocks()
 	}
@@ -1140,6 +1161,7 @@ function createAtlas(sources) {
 
 window.onload = function() {
 	hud = document.getElementById('H')
+	scores = document.getElementById('S')
 	const sources = [],
 		gs = document.getElementsByTagName('g')
 	for (let i = 0, l = gs.length; i < l; ++i) {
