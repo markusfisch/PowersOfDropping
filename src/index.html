@@ -31,21 +31,35 @@ html, body {
 	display: none;
 }
 #H {
-	background: rgba(0, 0, 0, .5);
+	background: rgba(0, 0, 0, .8);
 	position: fixed;
 	left: 0; top: 0;
 	right: 0; bottom: 0;
-	padding: 30vh 2em;
+	padding: 4em;
+	display: flex;
+	justify-content: center;
+	align-items: center;
 	text-align: center;
 }
-@keyframes popbg {
+h1 {
+	margin: 0 0 1em; padding: 0;
+}
+.B, .S {
+	padding: 1em;
+	border-radius: .2em;
+}
+.B {
+	background: #fff; color: #111;
+}
+.S {
+	padding: .2em;
+	font-size: 80%;
+	border: 2px solid #111;
+}
+@keyframes pop {
 	0% { background: transparent; }
 	50% { transform: scale(1.5); }
-	100% { background: rgba(0, 0, 0, .5); }
-}
-@keyframes popfade {
-	50% { opacity: 1; transform: scale(1.5); }
-	100% { opacity: 0; }
+	100% { background: rgba(0, 0, 0, .8); }
 }
 </style>
 </head>
@@ -103,10 +117,10 @@ html, body {
 	<circle style="fill:#111;stroke:#fff;stroke-width:6" cx="50" cy="50" r="40"/>
 </g>
 </svg>
-<div id="H"><p>Use &lt;space&gt; or the left button to drop blocks.</p>
-<p>Connect walls to remove the line and/or column.</p>
-<h2>Clear all walls</h2>or
-<h2>hit all enemies</h2>to win!</div>
+<div id="H"><div class="B">Use <span class="S">SPACE</span>
+or the left button to drop blocks.<br/><br/>
+Connect walls to remove a line or column.<br/><br/>
+Clear all walls or hit all enemies to win!</div></div>
 <script id="VS" type="x-shader/x-vertex">
 attribute vec2 vp;
 attribute vec2 tp;

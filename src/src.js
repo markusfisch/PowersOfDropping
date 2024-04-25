@@ -180,16 +180,14 @@ function draw(shakeX, shakeY) {
 	}
 }
 
-function say(m, fade) {
-	hud.innerHTML = m
-	hud.style.animation = `pop${fade
-			? "fade 1s"
-			: "bg .25s"} ease-in-out forwards`
-	hud.style.display = "block"
+function say(m) {
+	hud.innerHTML = `<div class="B">${m}</div>`
+	hud.style.animation = "pop .5s ease-in-out forwards"
+	hud.style.display = "flex"
 }
 
 function gameWon() {
-	say(`<h1>Level ${++level} won!</h1>`)
+	say(`<h1>LEVEL ${++level} WON!</h1>Tap to proceed…`)
 	gameOver = now
 	for (let i = 0; i < entitiesLength; ++i) {
 		const e = entities[i]
@@ -200,7 +198,7 @@ function gameWon() {
 }
 
 function gameLost() {
-	say("<h1>You lost!</h1>Tap to try again.")
+	say("<h1>LOST!</h1>Tap to try again…")
 	gameOver = now
 	player.alive = false
 	shake()
