@@ -599,8 +599,8 @@ function move(dx, dy) {
 	}
 }
 
-function sayLevel() {
-	say(`LEVEL ${level + 1}`, true)
+function hideHud() {
+	hud.style.display = "none"
 }
 
 function tryRestart() {
@@ -608,13 +608,13 @@ function tryRestart() {
 		magnification = defaultMag
 		createLevel()
 		resize()
-		sayLevel()
+		hideHud()
 	}
 }
 
 function hideIntro() {
 	introOver = true
-	sayLevel()
+	hideHud()
 }
 
 function processTouch() {
