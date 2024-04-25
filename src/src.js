@@ -74,6 +74,8 @@ let seed = 1,
 	entitiesLength,
 	pointersLength,
 	player,
+	level = 0,
+	sight,
 	introOver = false,
 	gameOver
 
@@ -177,18 +179,16 @@ function draw(shakeX, shakeY) {
 	}
 }
 
-function hideHud() {
-	hud.style.display = "none"
-}
-
-function say(m) {
+function say(m, fade) {
 	hud.innerHTML = m
-	hud.style.animation = "pop 0.25s ease-in-out forwards"
+	hud.style.animation = `pop${fade
+			? "fade 1s"
+			: "bg .25s"} ease-in-out forwards`
 	hud.style.display = "block"
 }
 
 function gameWon() {
-	say("<h1>You won!</h1>")
+	say(`<h1>Level ${++level} won!</h1>`)
 	gameOver = now
 	for (let i = 0; i < entitiesLength; ++i) {
 		const e = entities[i]
@@ -395,7 +395,7 @@ function findMove(e) {
 			spawnDust(player.x, player.y, 4)
 			gameLost()
 			return
-		} else if (d < 9) {
+		} else if (d < sight) {
 			// Chase!
 			findPath(e, player)
 		}
@@ -569,18 +569,22 @@ function move(dx, dy) {
 	}
 }
 
+function sayLevel() {
+	say(`LEVEL ${level + 1}`, true)
+}
+
 function tryRestart() {
 	if (now - gameOver > 1000) {
 		magnification = defaultMag
-		createMap()
+		createLevel()
 		resize()
-		hideHud()
+		sayLevel()
 	}
 }
 
 function hideIntro() {
-	hideHud()
 	introOver = true
+	sayLevel()
 }
 
 function processTouch() {
@@ -932,34 +936,7 @@ function addEntity(sprites, x, y) {
 	return e
 }
 
-function createMap() {
-	gameOver = 0
-	for (let i = dustLength; i-- > 0;) {
-		dust[i] = {
-			x: 0,
-			y: 0,
-			life: 0
-		}
-	}
-	for (let i = fallingBlocksLength; i-- > 0;) {
-		fallingBlocks[i] = {
-			x: 0,
-			y: 0,
-			height: 0,
-			fallAt: 0
-		}
-	}
-	mapCols = mapRows = 31
-	for (let i = 0, y = 0; y < mapRows; ++y) {
-		for (let x = 0; x < mapCols; ++x, ++i) {
-			ground[i] = i & 1 ? FLOOR_ODD : FLOOR_EVEN
-			items[i] = 0
-			nodes[i] = {
-				x: x,
-				y: y
-			}
-		}
-	}
+function indexNeighbors() {
 	for (let i = 0, y = 0; y < mapRows; ++y) {
 		for (let x = 0; x < mapCols; ++x, ++i) {
 			const neighbors = []
@@ -978,15 +955,48 @@ function createMap() {
 			nodes[i].neighbors = neighbors
 		}
 	}
+}
+
+function createLevel() {
+	gameOver = 0
+	seed = level + 1
+	for (let i = dustLength; i-- > 0;) {
+		dust[i] = {
+			x: 0,
+			y: 0,
+			life: 0
+		}
+	}
+	for (let i = fallingBlocksLength; i-- > 0;) {
+		fallingBlocks[i] = {
+			x: 0,
+			y: 0,
+			height: 0,
+			fallAt: 0
+		}
+	}
+	mapCols = mapRows = 15 + level * 2
+	sight = (Math.max(mapCols, mapRows) / 3 | 0) + level
+	for (let i = 0, y = 0; y < mapRows; ++y) {
+		for (let x = 0; x < mapCols; ++x, ++i) {
+			ground[i] = i & 1 ? FLOOR_ODD : FLOOR_EVEN
+			items[i] = 0
+			nodes[i] = {
+				x: x,
+				y: y
+			}
+		}
+	}
+	indexNeighbors()
 	maze(2, 2, mapCols - 3, mapRows - 3)
-	for (let y = (mapRows / 2 - 4) | 0, ye = mapRows - y; y < ye; ++y) {
-		for (let x = (mapCols / 2 - 4) | 0, xe = mapCols - x; x < xe; ++x) {
+	for (let y = (mapRows / 2 - 3) | 0, ye = mapRows - y; y < ye; ++y) {
+		for (let x = (mapCols / 2 - 3) | 0, xe = mapCols - x; x < xe; ++x) {
 			setItem(x, y, 0)
 		}
 	}
 	entities.length = 0
 	player = addEntity([PLAYER], mapCols >> 1, mapRows >> 1)
-	for (let i = 0; i < 4; ++i) {
+	for (let i = 0, max = 1 + level / 3 | 0; i < max; ++i) {
 		let x, y
 		do {
 			x = Math.round(random() * (mapCols - 1))
@@ -999,7 +1009,7 @@ function createMap() {
 }
 
 function init(atlas) {
-	createMap()
+	createLevel()
 
 	const canvas = document.getElementById('C')
 

@@ -31,17 +31,21 @@ html, body {
 	display: none;
 }
 #H {
+	background: rgba(0, 0, 0, .5);
 	position: fixed;
 	left: 0; top: 0;
 	right: 0; bottom: 0;
 	padding: 30vh 2em;
 	text-align: center;
-	animation: pop 0.25s ease-in-out forwards;
 }
-@keyframes pop {
+@keyframes popbg {
 	0% { background: transparent; }
 	50% { transform: scale(1.5); }
-	100% { background: rgba(0, 0, 0, .7); }
+	100% { background: rgba(0, 0, 0, .5); }
+}
+@keyframes popfade {
+	50% { opacity: 1; transform: scale(1.5); }
+	100% { opacity: 0; }
 }
 </style>
 </head>
