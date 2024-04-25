@@ -187,7 +187,9 @@ function say(m) {
 }
 
 function gameWon() {
-	say(`<h1>LEVEL ${++level} WON!</h1>Tap to proceed…`)
+	say(++level >= 14
+			? "<h1>CONGRATS</h1>You beat the game!"
+			: `<h1>LEVEL ${level} WON!</h1>Tap to proceed…`)
 	gameOver = now
 	for (let i = 0; i < entitiesLength; ++i) {
 		const e = entities[i]
@@ -602,7 +604,7 @@ function hideHud() {
 }
 
 function tryRestart() {
-	if (now - gameOver > 1000) {
+	if (level < 15 && now - gameOver > 1000) {
 		magnification = defaultMag
 		createLevel()
 		resize()
