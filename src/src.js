@@ -151,11 +151,11 @@ function draw(shakeX, shakeY) {
 		}
 	}
 	// Draw entities.
-	const frame = now / moveDuration | 0
+	let frame = now / moveDuration | 0
 	for (let i = 0; i < entitiesLength; ++i) {
 		const e = entities[i]
 		if (e.alive) {
-			drawSprite(e.sprite(frame),
+			drawSprite(e.sprite(frame++),
 				vx + e.x * tileSize,
 				vy - e.y * tileSize,
 				1,
