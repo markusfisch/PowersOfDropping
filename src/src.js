@@ -214,6 +214,7 @@ function gameLost() {
 	if (gameOver) {
 		return
 	}
+	score = Math.max(60, score - 1000)
 	say("<h1>LOST!</h1>Tap to try again…")
 	gameOver = now
 	player.alive = false
