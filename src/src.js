@@ -13,6 +13,10 @@ const PLAYER = 0,
 	CATCHER_EVEN = 10,
 	EAGLE_EYE = 11,
 	PORTAL = 12,
+	TRAP = 13,
+	BARRIER = 14,
+	ADD_SCORES = 15,
+	ADD_CATCHER = 16,
 	directions = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}],
 	defaultMag = .1,
 	shakePattern = [.1, .4, .7, .3, .5, .2],
@@ -325,17 +329,36 @@ function digestItem(e) {
 	switch (items[o]) {
 	case 0:
 		return
-	case PORTAL:
-		const p = findRandomSpot()
-		e.x = e.destX = p[0]
-		e.y = e.destY = p[1]
-		if (e === player) {
-			setViewDest(e.x, e.y)
+	case PORTAL: {
+			const p = findRandomSpot()
+			e.x = e.destX = p[0]
+			e.y = e.destY = p[1]
+			if (e === player) {
+				setViewDest(e.x, e.y)
+			}
 		}
 		break
 	case EAGLE_EYE:
 		if (e === player) {
 			toggleEagleEye()
+		}
+		break
+	case TRAP:
+		if (e === player) {
+			spawnDust(player.x, player.y, 4)
+			gameLost()
+		} else {
+			return
+		}
+		break
+	case BARRIER:
+		return
+	case ADD_SCORES:
+		score += 100
+		break
+	case ADD_CATCHER: {
+			const p = findRandomSpot()
+			addCatcherEntity(p[0], p[1])
 		}
 		break
 	}
@@ -525,8 +548,16 @@ function pickItem() {
 	const r = Math.random()
 	if (r < .05) {
 		return EAGLE_EYE
-	} else if (r < .1) {
+	} else if (r < .06) {
 		return PORTAL
+	} else if (r < .07) {
+		return TRAP
+	} else if (r < .08) {
+		return BARRIER
+	} else if (r < .09) {
+		return ADD_SCORES
+	} else if (r < .1) {
+		return ADD_CATCHER
 	}
 	return 0
 }
@@ -606,7 +637,8 @@ function run() {
 }
 
 function canMoveTo(x, y) {
-	return items[offset(x, y)] != BLOCK
+	const item = items[offset(x, y)]
+	return item != BLOCK && item != BARRIER
 }
 
 function move(dx, dy) {
@@ -987,7 +1019,12 @@ function addEntity(sprites, x, y) {
 		vy: 0
 	}
 	entities.push(e)
+	entitiesLength = entities.length
 	return e
+}
+
+function addCatcherEntity(x, y) {
+	addEntity([CATCHER_ODD, CATCHER_EVEN], x, y)
 }
 
 function indexNeighbors() {
@@ -1048,13 +1085,12 @@ function createLevel() {
 			setItem(x, y, 0)
 		}
 	}
-	entities.length = entitiesLength = 0
+	entities.length = 0
 	player = addEntity([PLAYER], mapCols >> 1, mapRows >> 1)
 	for (let i = 0, max = 1 + level / 3 | 0; i < max; ++i) {
-		const spot = findRandomSpot()
-		addEntity([CATCHER_ODD, CATCHER_EVEN], spot[0], spot[1])
+		const p = findRandomSpot()
+		addCatcherEntity(p[0], p[1])
 	}
-	entitiesLength = entities.length
 }
 
 function init(atlas) {
