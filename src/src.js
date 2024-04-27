@@ -403,7 +403,9 @@ function findPath(e, target) {
 		openSet.splice(low, 1)
 		closedSet.push(current)
 
-		current.neighbors.forEach(neighbor => {
+		const neighbors = current.neighbors
+		for (let i = 0, l = neighbors.length; i < l; ++i) {
+			const neighbor = neighbors[i]
 			if (!closedSet.includes(neighbor) &&
 					items[offset(neighbor.x, neighbor.y)] != BLOCK) {
 				const tg = current.g + 1
@@ -424,7 +426,7 @@ function findPath(e, target) {
 					neighbor.p = current
 				}
 			}
-		})
+		}
 	}
 }
 
