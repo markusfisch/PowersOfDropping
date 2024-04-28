@@ -647,6 +647,7 @@ function move(dx, dy) {
 		y = Math.min(mapRows - 1, Math.max(0, player.destY + dy))
 	if (canMoveTo(x, y)) {
 		setDestination(player, x, y)
+		navigator.vibrate(10)
 		if (Math.abs(viewDestX + x * tileSize) > viewMoveXAt) {
 			viewDestX -= tileSize * dx
 		}
@@ -862,7 +863,10 @@ function layoutTouchControls() {
 			sprite: DROP, w: size, h: size,
 			x: dropX,
 			y: dropY,
-			click: () => dropBlock(player.x, player.y)
+			click: () => {
+				dropBlock(player.x, player.y)
+				navigator.vibrate(10)
+			}
 		}
 	]
 	btnsLength = btns.length
