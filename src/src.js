@@ -60,7 +60,7 @@ let seed = 1,
 	showTouchControls = false,
 	btnsLength,
 	btns,
-	btnSize,
+	btnRadius,
 	maxColsInView,
 	maxRowsInView,
 	mapCols,
@@ -689,8 +689,8 @@ function processTouch() {
 		let d
 		for (let i = 0; i < btnsLength; ++i) {
 			const b = btns[i]
-			if (Math.abs(b.x - px) < btnSize &&
-					Math.abs(b.y - py) < btnSize) {
+			if (Math.abs(b.x - px) < btnRadius &&
+					Math.abs(b.y - py) < btnRadius) {
 				d = b.click()
 				break
 			}
@@ -866,7 +866,7 @@ function layoutTouchControls() {
 		}
 	]
 	btnsLength = btns.length
-	btnSize = tileSize * size
+	btnRadius = tileSize * size * 1.2
 }
 
 function resize() {
