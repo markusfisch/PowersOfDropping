@@ -402,7 +402,7 @@ function findPath(e, target) {
 	start.h = dist(e, target)
 	while (openSet.length > 0) {
 		let low = 0
-		for (let i = 0; i < openSet.length; ++i) {
+		for (let i = 0, l = openSet.length; i < l; ++i) {
 			if (openSet[i].f < openSet[low].f) {
 				low = i
 			}
