@@ -514,6 +514,8 @@ function executeMove(e) {
 		digestItem(e)
 		return p
 	}
+	e.x = e.destX
+	e.y = e.destY
 	return 0
 }
 
