@@ -360,6 +360,8 @@ function digestItem(e) {
 	case EAGLE_EYE:
 		if (e === player) {
 			toggleEagleEye()
+		} else {
+			++e.sight
 		}
 		break
 	case TRAP:
@@ -480,7 +482,7 @@ function findMove(e) {
 			spawnDust(player.x, player.y, 4)
 			gameLost()
 			return
-		} else if (d < sight) {
+		} else if (d < sight + e.sight) {
 			// Chase!
 			findPath(e, player)
 		}
@@ -1039,7 +1041,8 @@ function addEntity(sprites, x, y) {
 		destX: x,
 		destY: y,
 		vx: random() > .5 ? -1 : 1,
-		vy: 0
+		vy: 0,
+		sight: 0
 	}
 	entities.push(e)
 	entitiesLength = entities.length
