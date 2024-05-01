@@ -139,12 +139,30 @@ function draw(shakeX, shakeY) {
 		}
 	}
 	// Draw items.
+	const dt = Math.abs(((now % 1000) / 1000) - .5)
 	for (let o = os, y = t, r = rt; r < rb; y -= tileSize, ++r, o += skip) {
 		for (let x = l, c = cl; c < cr; x += tileSize, ++c, ++o) {
 			const item = items[o]
-			if (item) {
-				drawSprite(item, x, y)
+			if (item < 1) {
+				continue
 			}
+			let xm = 1, ym = 1
+			switch (item) {
+			case PORTAL:
+				xm = ym = .7 + dt * .3
+				break
+			case EAGLE_EYE:
+			case TRAP:
+				xm = 1
+				ym = 1 + dt * .3
+				break
+			case ADD_SCORES:
+			case ADD_CATCHER:
+				xm = dt * 2
+				ym = 1
+				break
+			}
+			drawSprite(item, x, y, xm, ym)
 		}
 	}
 	// Draw dust.
