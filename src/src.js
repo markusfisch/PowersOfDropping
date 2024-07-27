@@ -46,6 +46,9 @@ let seed = 1,
 	tm,
 	tml,
 	hud,
+	audioContext,
+	gainNode,
+	musicId,
 	scores,
 	score = 1000,
 	nextScoreUpdate = 0,
@@ -692,9 +695,33 @@ function tryRestart() {
 	}
 }
 
+function playMusic() {
+	if (!audioContext) {
+		audioContext = new (window.AudioContext || window.webkitAudioContext)();
+		gainNode = audioContext.createGain();
+		gainNode.connect(audioContext.destination);
+	}
+	const currentTime = audioContext.currentTime
+	let time = currentTime
+	;[48, 48, 48, 48, 48, 60, 48, 48, 48, 60, 48, 48, 60, 49, 71, 49, 71, 71, 49, 71, 64, 49, 66, 49, 64, 61, 66, 49, 64, 49, 63, 49, 64, 61, 64, 49, 64, 49, 64, 64, 61, 48, 48, 48, 48, 48, 60, 48, 48, 48, 60, 48, 48, 60, 49, 64, 49, 64, 64, 49, 64, 49, 49, 64, 61, 64, 49, 64, 49, 49, 61, 64, 49, 64, 49, 61, 64, 48, 48, 48, 48, 62, 48, 61, 60, 48, 48, 62, 61, 48, 60, 48, 61, 48, 62, 60, 49, 64, 64, 49, 64, 49, 64, 49, 64, 49, 61, 64, 49, 49, 64, 49, 64, 61, 49, 64, 49, 64, 61].forEach(note => {
+		const oscillator = audioContext.createOscillator()
+		oscillator.connect(gainNode)
+		oscillator.frequency.value = 440 * Math.pow(2, (note - 69) / 12)
+		gainNode.gain.setValueAtTime(1, time)
+		gainNode.gain.setTargetAtTime(.0001, time + .03, .005)
+		oscillator.start(time)
+		time += .1
+		oscillator.stop(time)
+	})
+	return setTimeout(playMusic, (time - currentTime) * 1000 + 100)
+}
+
 function hideIntro() {
 	introOver = true
 	hideHud()
+	if (!musicId) {
+		musicId = playMusic()
+	}
 }
 
 function processTouch() {
