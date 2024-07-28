@@ -712,7 +712,7 @@ function playMusic() {
 		const oscillator = audioContext.createOscillator()
 		oscillator.connect(gainNode)
 		oscillator.frequency.value = 440 * Math.pow(2, (note - 69) / 12)
-		gainNode.gain.setValueAtTime(1, time)
+		gainNode.gain.setValueAtTime(.5, time)
 		gainNode.gain.setTargetAtTime(.0001, time + .03, .005)
 		oscillator.start(time)
 		time += .1
