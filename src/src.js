@@ -742,8 +742,8 @@ function processTouch() {
 		const px = pointersX[i],
 			py = pointersY[i]
 		let d
-		for (let i = 0; i < btnsLength; ++i) {
-			const b = btns[i]
+		for (let j = 0; j < btnsLength; ++j) {
+			const b = btns[j]
 			if (Math.abs(b.x - px) < btnRadius &&
 					Math.abs(b.y - py) < btnRadius) {
 				d = b.click()
