@@ -920,6 +920,7 @@ function layoutTouchControls() {
 			click: () => {
 				dropBlock(player.x, player.y)
 				navigator.vibrate(10)
+				null
 			}
 		}
 	]
