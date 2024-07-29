@@ -766,7 +766,7 @@ function pageYToGl(y) {
 
 function setPointer(event, down) {
 	if (!down) {
-		pointersLength = event.touches ? event.touches.length : 0
+		pointersLength = 0
 	} else if (event.touches) {
 		const touches = event.touches
 		pointersLength = touches.length
