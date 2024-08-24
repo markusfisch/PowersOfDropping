@@ -641,7 +641,7 @@ function run() {
 
 	let shakeX = 0, shakeY = 0
 	if (shakeUntil > now) {
-		let p = (shakeUntil - now) / shakeDuration * .05
+		const p = (shakeUntil - now) / shakeDuration * .05
 		shakeX = shakePattern[(now + 1) % shakeLength] * p
 		shakeY = shakePattern[now % shakeLength] * p
 	}
